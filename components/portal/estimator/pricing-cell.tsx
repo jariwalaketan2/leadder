@@ -100,8 +100,8 @@ export function PricingCell({
         disabled
           ? 'cursor-not-allowed border-transparent'
           : price !== null
-            ? 'border-transparent hover:border-border hover:bg-muted cursor-pointer'
-            : 'border-dashed border-border hover:border-primary hover:bg-muted cursor-pointer'
+            ? 'border-transparent hover:border-border hover:bg-muted/50 cursor-pointer'
+            : 'border-dashed border-border hover:border-primary hover:bg-muted/50 cursor-pointer'
       }`}
     >
       {price !== null ? (
