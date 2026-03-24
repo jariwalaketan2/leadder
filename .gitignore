@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Production build
+build/
+dist/
+
+# Environment variables
+.env
+.env*.local
+.env.production
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+bun-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
+
+# Playwright
+.playwright-mcp/
+test-results/
+playwright-report/
+
+# Temporary files
+*.log
+.cache/
+tmp/
+temp/
+
+# Test and debug scripts
+test-*.js
+test-*.mjs
+check-*.js
+*-debug.js
+add-constraint.js
+apply-*.js
+cleanup-*.js

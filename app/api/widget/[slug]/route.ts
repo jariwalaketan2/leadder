@@ -1,0 +1,123 @@
+import { createClient } from '@supabase/supabase-js'
+import { NextResponse } from 'next/server'
+
+// Use service role to bypass RLS for public widget access
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const { slug } = await params
+
+  try {
+    // Fetch business by slug
+    const { data: business, error: businessError } = await supabaseAdmin
+      .from('businesses')
+      .select('id, name, slug, primary_color, logo_url')
+      .eq('slug', slug)
+      .single()
+
+    if (businessError || !business) {
+      return NextResponse.json(
+        { error: 'Business not found' },
+        { status: 404 }
+      )
+    }
+
+    // Fetch products with capacity options for this business only
+    const { data: products } = await supabaseAdmin
+      .from('products')
+      .select(`
+        id,
+        name,
+        slug,
+        category,
+        description,
+        icon,
+        display_order,
+        capacity_options (
+          id,
+          label,
+          value,
+          unit,
+          display_order
+        )
+      `)
+      .eq('business_id', business.id)
+      .eq('is_active', true)
+      .order('display_order')
+
+    // Fetch pricing tiers for this business
+    const { data: pricingTiers } = await supabaseAdmin
+      .from('pricing_tiers')
+      .select('*')
+      .eq('business_id', business.id)
+      .eq('is_active', true)
+
+    // Fetch business settings
+    const { data: settings } = await supabaseAdmin
+      .from('business_settings')
+      .select('widget_enabled, widget_title, widget_subtitle, widget_thank_you_message, price_range_pct')
+      .eq('business_id', business.id)
+      .single()
+
+    if (settings?.widget_enabled === false) {
+      return NextResponse.json({ error: 'Widget is currently disabled' }, { status: 403 })
+    }
+
+    // Fetch ALL per-product configs (need is_enabled to filter visibility + pricing modifiers)
+    const { data: allProductConfigs } = await supabaseAdmin
+      .from('business_product_configs')
+      .select('product_id, is_enabled, price_range_pct, multi_unit_discount_pct, attic_additional_cost, basement_additional_cost, closet_additional_cost, garage_additional_cost, crawl_space_additional_cost')
+      .eq('business_id', business.id)
+
+    // Products are visible unless EXPLICITLY disabled (is_enabled = false)
+    // No config entry = default enabled
+    const explicitlyDisabledIds = new Set(
+      allProductConfigs?.filter(c => c.is_enabled === false).map(c => c.product_id) || []
+    )
+    const configuredProductIds = new Set(pricingTiers?.map(t => t.product_id) || [])
+    const configuredProducts = products?.filter(p =>
+      configuredProductIds.has(p.id) && !explicitlyDisabledIds.has(p.id)
+    ) || []
+
+    // Only pass enabled configs as pricing modifiers
+    const productConfigs = allProductConfigs?.filter(c => c.is_enabled !== false) || []
+
+    // Fetch tier system configurations (efficiency description per tier)
+    const { data: systemConfigs } = await supabaseAdmin
+      .from('tier_system_configurations')
+      .select('product_id, tier, efficiency_description')
+      .eq('business_id', business.id)
+
+    return NextResponse.json({
+      business: {
+        id: business.id,
+        name: business.name,
+        slug: business.slug,
+        primaryColor: business.primary_color,
+        logoUrl: business.logo_url,
+      },
+      products: configuredProducts,
+      pricingTiers: pricingTiers || [],
+      productConfigs: productConfigs || [],
+      systemConfigs: systemConfigs || [],
+      settings: {
+        widget_title: settings?.widget_title || 'Get Your Instant Quote',
+        widget_subtitle: settings?.widget_subtitle || 'Select your HVAC service to see pricing',
+        widget_thank_you_message: settings?.widget_thank_you_message || "Thank you! We'll be in touch soon.",
+        price_range_pct: settings?.price_range_pct ?? 0,
+      },
+    })
+  } catch (error) {
+    console.error('Error fetching widget data:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
