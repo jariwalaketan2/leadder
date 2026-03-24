@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget Test Page</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .widget-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .widget-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .widget-badge {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .size-label {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        iframe {
+            border: none;
+            width: 100%;
+            border-radius: 8px;
+        }
+        
+        .grid-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .sidebar-widget {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .mobile-widget {
+            max-width: 375px;
+            margin: 0 auto;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+        
+        .info-box strong {
+            color: #333;
+        }
+        
+        .info-box code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+            color: #d63384;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Widget Integration Test</h1>
+            <p>This page demonstrates how the widget appears when embedded on a customer's website using an iframe.</p>
+        </div>
+        
+        <div class="widget-container">
+            <div class="widget-header">
+                <div class="widget-title">Full Width - Standard</div>
+                <div class="size-label">100% × 700px</div>
+            </div>
+            
+            <iframe 
+                src="https://leadder-ochre.vercel.app/widget/test-hvac-885b67" 
+                width="100%" 
+                height="700" 
+                frameborder="0" 
+                style="border: none; max-width: 100%;">
+            </iframe>
+            
+            <div class="info-box">
+                <strong>📋 Embed Code:</strong><br>
+                <code>&lt;iframe src="..." width="100%" height="700"&gt;&lt;/iframe&gt;</code>
+            </div>
+        </div>
+
+        <div class="grid-layout">
+            <!-- Mobile Widget -->
+            <div class="widget-container mobile-widget">
+                <div class="widget-header">
+                    <div class="widget-title">Mobile - iPhone Size</div>
+                    <div class="size-label">375px × 667px</div>
+                </div>
+                
+                <iframe 
+                    src="https://leadder-ochre.vercel.app/widget/test-hvac-885b67" 
+                    width="375" 
+                    height="667" 
+                    frameborder="0" 
+                    style="border: none; max-width: 100%;">
+                </iframe>
+                
+                <div class="info-box">
+                    <strong>📋 Embed Code:</strong><br>
+                    <code>&lt;iframe src="..." width="375" height="667"&gt;&lt;/iframe&gt;</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compact Widget -->
+        <div class="widget-container">
+            <div class="widget-header">
+                <div class="widget-title">Compact - Short Height</div>
+                <div class="size-label">100% × 400px</div>
+            </div>
+            
+            <iframe 
+                src="https://leadder-ochre.vercel.app/widget/test-hvac-885b67" 
+                width="100%" 
+                height="400" 
+                frameborder="0" 
+                style="border: none; max-width: 100%;">
+            </iframe>
+            
+            <div class="info-box">
+                <strong>📋 Embed Code:</strong><br>
+                <code>&lt;iframe src="..." width="100%" height="400"&gt;&lt;/iframe&gt;</code>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

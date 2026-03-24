@@ -35,9 +35,6 @@ export function SettingsForm({ business, settings }: SettingsFormProps) {
   // Integrations
   const [webhookUrl, setWebhookUrl] = useState(settings?.webhook_url || '')
 
-  // Notifications
-  const [notificationEmail, setNotificationEmail] = useState(settings?.notification_email || business.email || '')
-
   const handleSave = async () => {
     setSaving(true)
     try {
@@ -55,7 +52,6 @@ export function SettingsForm({ business, settings }: SettingsFormProps) {
             widget_thank_you_message: widgetThankYou,
             widget_enabled: widgetEnabled,
             webhook_url: webhookUrl || null,
-            notification_email: notificationEmail || null,
           })
           .eq('business_id', business.id),
       ])
@@ -214,31 +210,6 @@ export function SettingsForm({ business, settings }: SettingsFormProps) {
             <p className="text-xs text-muted-foreground">
               Leave blank to disable. We&apos;ll send a JSON POST with lead name, email,
               phone, address, product, tier, and quoted price.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Notifications */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-foreground">Notifications</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label htmlFor="notificationEmail" className="text-foreground">
-              Lead Notification Email
-            </Label>
-            <Input
-              id="notificationEmail"
-              type="email"
-              placeholder="alerts@yourcompany.com"
-              value={notificationEmail}
-              onChange={e => setNotificationEmail(e.target.value)}
-              className="bg-input border-border text-foreground"
-            />
-            <p className="text-xs text-muted-foreground">
-              Receive an email when a new lead submits a quote request
             </p>
           </div>
         </CardContent>
