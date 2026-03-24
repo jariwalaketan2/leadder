@@ -129,7 +129,6 @@ export interface TierSystemConfiguration {
   efficiency_description: string | null
   warranty_years: number | null
   warranty_terms: string | null
-  features: string[]
   scope_of_work: string | null
   image_url: string | null
   created_at: string

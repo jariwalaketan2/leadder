@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Loader2, Plus, X, CopyCheck } from 'lucide-react'
+import { Loader2, CopyCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { TierSystemConfiguration, CapacityOption, PricingTier } from '@/lib/types/database'
@@ -52,28 +52,24 @@ export function SystemConfigPanel({
     efficiency_description: string
     warranty_years: string
     warranty_terms: string
-    features: string[]
     scope_of_work: string
   }>>({
     good: {
       efficiency_description: getConfig(systemConfig, 'good').efficiency_description ?? '',
       warranty_years: getConfig(systemConfig, 'good').warranty_years?.toString() ?? '',
       warranty_terms: getConfig(systemConfig, 'good').warranty_terms ?? '',
-      features: getConfig(systemConfig, 'good').features ?? [],
       scope_of_work: getConfig(systemConfig, 'good').scope_of_work ?? '',
     },
     better: {
       efficiency_description: getConfig(systemConfig, 'better').efficiency_description ?? '',
       warranty_years: getConfig(systemConfig, 'better').warranty_years?.toString() ?? '',
       warranty_terms: getConfig(systemConfig, 'better').warranty_terms ?? '',
-      features: getConfig(systemConfig, 'better').features ?? [],
       scope_of_work: getConfig(systemConfig, 'better').scope_of_work ?? '',
     },
     best: {
       efficiency_description: getConfig(systemConfig, 'best').efficiency_description ?? '',
       warranty_years: getConfig(systemConfig, 'best').warranty_years?.toString() ?? '',
       warranty_terms: getConfig(systemConfig, 'best').warranty_terms ?? '',
-      features: getConfig(systemConfig, 'best').features ?? [],
       scope_of_work: getConfig(systemConfig, 'best').scope_of_work ?? '',
     },
   })
@@ -81,25 +77,11 @@ export function SystemConfigPanel({
   const [savingTier, setSavingTier] = useState<TierType | null>(null)
   const [applyingAll, setApplyingAll] = useState(false)
 
-  function updateField(tier: TierType, field: string, value: string | string[]) {
+  function updateField(tier: TierType, field: string, value: string) {
     setConfigs(prev => ({
       ...prev,
       [tier]: { ...prev[tier], [field]: value },
     }))
-  }
-
-  function addFeature(tier: TierType) {
-    updateField(tier, 'features', [...configs[tier].features, ''])
-  }
-
-  function updateFeature(tier: TierType, index: number, value: string) {
-    const updated = [...configs[tier].features]
-    updated[index] = value
-    updateField(tier, 'features', updated)
-  }
-
-  function removeFeature(tier: TierType, index: number) {
-    updateField(tier, 'features', configs[tier].features.filter((_, i) => i !== index))
   }
 
   async function saveTierConfig(tier: TierType) {
@@ -113,7 +95,6 @@ export function SystemConfigPanel({
         efficiency_description: cfg.efficiency_description || null,
         warranty_years: cfg.warranty_years ? parseInt(cfg.warranty_years) : null,
         warranty_terms: cfg.warranty_terms || null,
-        features: cfg.features.filter(f => f.trim()),
         scope_of_work: cfg.scope_of_work || null,
         updated_at: new Date().toISOString(),
       }
@@ -163,7 +144,6 @@ export function SystemConfigPanel({
       for (const capacity of enabledCapacities) {
         for (const tier of TIER_ORDER) {
           const cfg = configs[tier]
-          const features = cfg.features.filter(f => f.trim())
           const warrantyYears = cfg.warranty_years ? parseInt(cfg.warranty_years) : null
           const scopeOfWork = cfg.scope_of_work || null
 
@@ -177,7 +157,6 @@ export function SystemConfigPanel({
                 .from('pricing_tiers')
                 .update({
                   warranty_years: warrantyYears,
-                  features,
                   scope_of_work: scopeOfWork,
                   updated_at: new Date().toISOString(),
                 })
@@ -195,7 +174,6 @@ export function SystemConfigPanel({
                   tier,
                   price: 0,
                   warranty_years: warrantyYears,
-                  features,
                   scope_of_work: scopeOfWork,
                   is_active: true,
                 })
@@ -246,7 +224,7 @@ export function SystemConfigPanel({
           </Button>
         </div>
         <p className="text-sm text-muted-foreground">
-          Configure tier descriptions, warranties, and features. Use "Apply to All" to push to every capacity.
+          Configure tier descriptions, warranties, and scope of work. Use "Apply to All" to push to every capacity.
         </p>
       </CardHeader>
       <CardContent>
@@ -300,44 +278,6 @@ export function SystemConfigPanel({
                   value={configs[tier].scope_of_work}
                   onChange={e => updateField(tier, 'scope_of_work', e.target.value)}
                 />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Features</Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => addFeature(tier)}
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Add
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {configs[tier].features.map((feature, i) => (
-                    <div key={i} className="flex gap-2">
-                      <Input
-                        placeholder={`Feature ${i + 1}`}
-                        value={feature}
-                        onChange={e => updateFeature(tier, i, e.target.value)}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeFeature(tier, i)}
-                        className="shrink-0"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  {configs[tier].features.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No features added yet.</p>
-                  )}
-                </div>
               </div>
 
               <Button
