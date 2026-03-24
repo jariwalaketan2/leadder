@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { Product, CapacityOption, PricingTier, TierSystemConfiguration, BusinessProductConfig } from '@/lib/types/database'
 import { getSqftRange } from '@/lib/utils/hvac'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Loader2, ExternalLink, CheckSquare, Square } from 'lucide-react'
+import { ArrowLeft, Loader2, ExternalLink, CheckSquare, Square, DollarSign, Edit } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
@@ -14,6 +14,7 @@ import { SystemConfigPanel } from './system-config-panel'
 import { PricingSettings } from './pricing-settings'
 import { LocationAdjustments } from './location-adjustments'
 import { BulkPriceEditor, SelectedCell } from './bulk-price-editor'
+import { ProductPricingModal } from './product-pricing-modal'
 
 interface PricingGridProps {
   product: Product
@@ -44,6 +45,7 @@ export function PricingGridComponent({
   const [pendingChanges, setPendingChanges] = useState<Map<string, number | null>>(new Map())
   const [togglingCapacity, setTogglingCapacity] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [showPricingModal, setShowPricingModal] = useState(false)
 
   // Bulk selection
   const [selectedCells, setSelectedCells] = useState<SelectedCell[]>([])
@@ -219,6 +221,56 @@ export function PricingGridComponent({
         </div>
       </div>
 
+      {/* Service Pricing Card */}
+      {isService && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Service Pricing</CardTitle>
+            <CardDescription>
+              Configure the price and description for this service
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {localTiers.length > 0 ? (
+              <div className="space-y-4">
+                <div className="flex items-start justify-between p-4 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <DollarSign className="w-5 h-5 text-primary" />
+                      <span className="text-2xl font-bold text-foreground">
+                        ${localTiers[0].price.toFixed(2)}
+                      </span>
+                    </div>
+                    {localTiers[0].scope_of_work && (
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                        {localTiers[0].scope_of_work}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPricingModal(true)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">
+                  No pricing configured yet
+                </p>
+                <Button onClick={() => setShowPricingModal(true)}>
+                  Configure Pricing
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {!isService && isSelecting && (
         <div className="text-xs text-muted-foreground">
           Click cells to select/deselect. Hit "Edit X Selected" to bulk-update prices.
@@ -364,6 +416,18 @@ export function PricingGridComponent({
         capacities={localCapacities}
         onTiersUpdate={setLocalTiers}
       />
+      )}
+
+      {/* Service Pricing Modal */}
+      {isService && (
+        <ProductPricingModal
+          product={{ ...product, capacity_options: [] }}
+          existingTiers={localTiers}
+          businessId={businessId}
+          isOpen={showPricingModal}
+          onClose={() => setShowPricingModal(false)}
+          onTiersUpdated={setLocalTiers}
+        />
       )}
     </div>
   )
