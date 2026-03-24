@@ -73,6 +73,11 @@ export function ProductPricingModal({
   const supabase = createClient()
 
   const hasCapacities = product.capacity_options && product.capacity_options.length > 0
+  const isService = product.category === 'service'
+
+  // Service-specific state
+  const [servicePrice, setServicePrice] = useState('')
+  const [serviceDescription, setServiceDescription] = useState('')
 
   // Initialize selected capacity
   useEffect(() => {
@@ -86,6 +91,19 @@ export function ProductPricingModal({
   // Load existing tier data when capacity changes
   useEffect(() => {
     if (!isOpen) return
+
+    if (isService) {
+      // Load service pricing
+      const serviceTier = existingTiers.find(t => t.capacity_option_id === null)
+      if (serviceTier) {
+        setServicePrice(serviceTier.price?.toString() || '')
+        setServiceDescription(serviceTier.scope_of_work || '')
+      } else {
+        setServicePrice('')
+        setServiceDescription('')
+      }
+      return
+    }
 
     const capacityId = selectedCapacity?.id || null
     const tiersForCapacity = existingTiers.filter(
@@ -105,7 +123,7 @@ export function ProductPricingModal({
     })
 
     setFormData(newFormData)
-  }, [selectedCapacity, existingTiers, isOpen])
+  }, [selectedCapacity, existingTiers, isOpen, isService])
 
   const handleInputChange = (
     tier: keyof TierFormData,
@@ -121,6 +139,41 @@ export function ProductPricingModal({
   const handleSave = async () => {
     setSaving(true)
     try {
+      if (isService) {
+        // Handle service pricing (simple)
+        await supabase
+          .from('pricing_tiers')
+          .delete()
+          .eq('business_id', businessId)
+          .eq('product_id', product.id)
+
+        if (servicePrice && parseFloat(servicePrice) > 0) {
+          const { data: newTier, error } = await supabase
+            .from('pricing_tiers')
+            .insert({
+              business_id: businessId,
+              product_id: product.id,
+              capacity_option_id: null,
+              tier: 'good',
+              price: parseFloat(servicePrice),
+              warranty_years: null,
+              features: [],
+              scope_of_work: serviceDescription || null,
+            })
+            .select()
+            .single()
+
+          if (error) throw error
+          onTiersUpdated(newTier ? [newTier] : [])
+        } else {
+          onTiersUpdated([])
+        }
+
+        toast.success('Service pricing saved successfully')
+        onClose()
+        return
+      }
+
       const capacityId = selectedCapacity?.id || null
       const tiersToUpsert: Array<{
         business_id: string
@@ -187,6 +240,20 @@ export function ProductPricingModal({
   const handleDelete = async () => {
     setSaving(true)
     try {
+      if (isService) {
+        await supabase
+          .from('pricing_tiers')
+          .delete()
+          .eq('business_id', businessId)
+          .eq('product_id', product.id)
+
+        onTiersUpdated([])
+        setServicePrice('')
+        setServiceDescription('')
+        toast.success('Service pricing deleted')
+        return
+      }
+
       const capacityId = selectedCapacity?.id || null
       
       await supabase
@@ -209,7 +276,9 @@ export function ProductPricingModal({
     }
   }
 
-  const hasPricing = formData.good.price || formData.better.price || formData.best.price
+  const hasPricing = isService 
+    ? !!servicePrice 
+    : (formData.good.price || formData.better.price || formData.best.price)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -221,6 +290,78 @@ export function ProductPricingModal({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Simple Service Pricing UI */}
+          {isService ? (
+            <>
+              <Card className="bg-muted/30 border-border">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-semibold text-foreground">
+                    Service Pricing
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="service-price" className="text-foreground">
+                      Price ($)
+                    </Label>
+                    <Input
+                      id="service-price"
+                      type="number"
+                      placeholder="0.00"
+                      value={servicePrice}
+                      onChange={(e) => setServicePrice(e.target.value)}
+                      className="bg-input border-border text-foreground"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="service-description" className="text-foreground">
+                      Description
+                    </Label>
+                    <Textarea
+                      id="service-description"
+                      placeholder="Describe what's included in this service..."
+                      value={serviceDescription}
+                      onChange={(e) => setServiceDescription(e.target.value)}
+                      rows={6}
+                      className="bg-input border-border text-foreground resize-none"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      This description will be displayed to customers when they select this service.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Actions for Service */}
+              <div className="flex items-center justify-between pt-4 border-t border-border">
+                {hasPricing ? (
+                  <Button
+                    variant="ghost"
+                    onClick={handleDelete}
+                    disabled={saving}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Pricing
+                  </Button>
+                ) : (
+                  <div />
+                )}
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={onClose} disabled={saving}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSave} disabled={saving}>
+                    {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Pricing
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
           {/* Capacity Selection */}
           {hasCapacities && (
             <div className="space-y-3">
@@ -381,6 +522,8 @@ export function ProductPricingModal({
               </Button>
             </div>
           </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

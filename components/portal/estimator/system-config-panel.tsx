@@ -286,7 +286,7 @@ export function SystemConfigPanel({
                 size="sm"
               >
                 {savingTier === tier && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Save {tier.charAt(0).toUpperCase() + tier.slice(1)}
+                Save
               </Button>
             </TabsContent>
           ))}
