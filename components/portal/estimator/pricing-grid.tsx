@@ -164,7 +164,8 @@ export function PricingGridComponent({
   const isCellSelected = (capacityId: string, tier: 'good' | 'better' | 'best') =>
     selectedCells.some(c => c.capacityId === capacityId && c.tier === tier)
 
-  const allCapacitiesDisabled = localCapacities.every(c => !c.is_enabled)
+  const isService = product.category === 'service'
+  const allCapacitiesDisabled = !isService && localCapacities.length > 0 && localCapacities.every(c => !c.is_enabled)
 
   if (allCapacitiesDisabled) {
     return (
@@ -202,14 +203,14 @@ export function PricingGridComponent({
             Preview Widget
           </Button>
 
-          {/* Bulk editor toggle */}
-          {selectedCells.length > 0 && (
+          {/* Bulk editor toggle - only for equipment with capacities */}
+          {!isService && selectedCells.length > 0 && (
             <Button size="sm" onClick={() => setBulkOpen(true)}>
               Edit {selectedCells.length} Selected
             </Button>
           )}
 
-          {pendingChanges.size > 0 && (
+          {!isService && pendingChanges.size > 0 && (
             <Button onClick={handleSaveAll} disabled={isSaving} size="sm">
               {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Save {pendingChanges.size} Change{pendingChanges.size > 1 ? 's' : ''}
@@ -218,13 +219,14 @@ export function PricingGridComponent({
         </div>
       </div>
 
-      {isSelecting && (
+      {!isService && isSelecting && (
         <div className="text-xs text-muted-foreground">
           Click cells to select/deselect. Hit "Edit X Selected" to bulk-update prices.
         </div>
       )}
 
-      {/* Pricing Grid — Task 3 (existing) + bulk select (Task 9) */}
+      {/* Pricing Grid — Task 3 (existing) + bulk select (Task 9) - Hide for services */}
+      {!isService && (
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -315,8 +317,10 @@ export function PricingGridComponent({
           </table>
         </div>
       </Card>
+      )}
 
-      {/* Task 5: System Config Panel */}
+      {/* Task 5: System Config Panel - Hide for services, they use the simple modal instead */}
+      {!isService && (
       <SystemConfigPanel
         businessId={businessId}
         productId={product.id}
@@ -326,24 +330,30 @@ export function PricingGridComponent({
         onConfigUpdate={setLocalSystemConfig}
         onTiersUpdate={setLocalTiers}
       />
+      )}
 
-      {/* Tasks 6 & 7: Price Range + Multi-Unit Discount */}
+      {/* Tasks 6 & 7: Price Range + Multi-Unit Discount - Hide for services */}
+      {!isService && (
       <PricingSettings
         businessId={businessId}
         productId={product.id}
         productConfig={localProductConfig}
         onConfigUpdate={setLocalProductConfig}
       />
+      )}
 
-      {/* Task 8: Location Adjustments */}
+      {/* Task 8: Location Adjustments - Hide for services */}
+      {!isService && (
       <LocationAdjustments
         businessId={businessId}
         productId={product.id}
         productConfig={localProductConfig}
         onConfigUpdate={setLocalProductConfig}
       />
+      )}
 
-      {/* Task 9: Bulk Price Editor */}
+      {/* Task 9: Bulk Price Editor - Only for equipment with capacities */}
+      {!isService && (
       <BulkPriceEditor
         open={bulkOpen}
         onClose={() => { setBulkOpen(false); setSelectedCells([]) }}
@@ -354,6 +364,7 @@ export function PricingGridComponent({
         capacities={localCapacities}
         onTiersUpdate={setLocalTiers}
       />
+      )}
     </div>
   )
 }
