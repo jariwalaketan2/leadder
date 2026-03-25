@@ -645,24 +645,51 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
               <h2 className="text-2xl font-bold text-[#1a1a3e]">HVAC Services</h2>
               <p className="text-gray-500 mt-1">Choose a service to get started</p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 max-w-2xl mx-auto">
+            <div className="grid gap-6 sm:grid-cols-2 max-w-3xl mx-auto">
               {serviceProducts.length === 0 ? (
                 <p className="text-center text-gray-400 text-sm col-span-2">No services currently available.</p>
               ) : serviceProducts.map(service => {
                 const IconComponent = PRODUCT_ICONS[service.icon] ?? Wrench
+                const tier = data.pricingTiers.find(t => t.product_id === service.id && t.capacity_option_id === null)
+                const descLines = tier
+                  ? (tier.features?.length > 0 ? tier.features : (tier.scope_of_work ?? '').split('\n').map(l => l.trim()).filter(Boolean))
+                  : []
+                const price = tier ? formatServicePrice(service.id) : null
                 return (
-                  <div
-                    key={service.id}
-                    onClick={() => handleServiceSelect(service)}
-                    className="cursor-pointer bg-white rounded-2xl border-2 border-gray-200 hover:border-indigo-400 transition-all p-6"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center mb-4">
-                      <IconComponent className="w-6 h-6 text-white" />
+                  <div key={service.id} className="bg-white rounded-2xl border-2 border-gray-200 overflow-hidden flex flex-col">
+                    <div className="p-6 flex-1">
+                      <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center mb-4">
+                        <IconComponent className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="font-bold text-[#1a1a3e] text-lg mb-1">{service.name}</h3>
+                      {service.description && (
+                        <p className="text-sm text-gray-500 mb-4 leading-relaxed">{service.description}</p>
+                      )}
+                      {price && (
+                        <p className="text-3xl font-bold text-indigo-600 mb-1">{price}</p>
+                      )}
+                      {tier?.warranty_years && (
+                        <p className="text-xs text-gray-400 mb-4">{tier.warranty_years}-yr warranty</p>
+                      )}
+                      {descLines.length > 0 && (
+                        <ul className="space-y-2 mt-3">
+                          {descLines.map((line, i) => (
+                            <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                              <Check className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
+                              {line}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
-                    <h3 className="font-semibold text-[#1a1a3e] mb-1">{service.name}</h3>
-                    {service.description && (
-                      <p className="text-sm text-gray-500 leading-relaxed">{service.description}</p>
-                    )}
+                    <div className="px-6 pb-6">
+                      <button
+                        onClick={() => handleServiceSelect(service)}
+                        className="w-full py-3 rounded-full bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors"
+                      >
+                        Book Service
+                      </button>
+                    </div>
                   </div>
                 )
               })}
