@@ -782,21 +782,39 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
                 <p className="text-center text-gray-400 text-sm">Contact us for a custom quote.</p>
               )}
 
-              {isService && selectedTier && (
-                <div className="max-w-sm mx-auto bg-white rounded-2xl border border-gray-200 p-5 text-left">
-                  <h3 className="font-semibold text-[#1a1a3e] mb-3">Your Quote</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Service</span>
-                      <span className="font-medium text-[#1a1a3e]">{selectedProduct?.name}</span>
-                    </div>
-                    <div className="flex justify-between items-center pt-3 mt-1 border-t border-gray-100">
-                      <span className="text-gray-500">Estimated Price</span>
-                      <span className="text-xl font-bold text-indigo-600">{formatPrice(selectedTier.price)}</span>
+              {isService && selectedTier && selectedProduct && (() => {
+                const descLines = selectedTier.features?.length > 0
+                  ? selectedTier.features
+                  : (selectedTier.scope_of_work ?? '').split('\n').map(l => l.trim()).filter(Boolean)
+                const IconComponent = PRODUCT_ICONS[selectedProduct.icon] ?? Wrench
+                return (
+                  <div className="max-w-md mx-auto bg-white rounded-2xl border-2 border-indigo-600 shadow-sm overflow-hidden">
+                    <div className="p-7">
+                      <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center mb-4">
+                        <IconComponent className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="font-bold text-[#1a1a3e] text-lg mb-1">{selectedProduct.name}</h3>
+                      {selectedProduct.description && (
+                        <p className="text-sm text-gray-500 mb-4 leading-relaxed">{selectedProduct.description}</p>
+                      )}
+                      <p className="text-3xl font-bold text-indigo-600 mb-1">{formatPrice(selectedTier.price)}</p>
+                      {selectedTier.warranty_years && (
+                        <p className="text-xs text-gray-400 mb-4">{selectedTier.warranty_years}-yr warranty</p>
+                      )}
+                      {descLines.length > 0 && (
+                        <ul className="space-y-2 mt-4">
+                          {descLines.map((line, i) => (
+                            <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                              <Check className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
+                              {line}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   </div>
-                </div>
-              )}
+                )
+              })()}
             </div>
           )
         })()}
