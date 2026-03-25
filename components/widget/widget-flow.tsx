@@ -559,7 +559,10 @@ const getLocationCost = (productId: string, location: string): number => {
   const progress = step === 'confirmation' ? 100
     : currentStepIndex >= 0 && totalSteps > 0 ? ((currentStepIndex + 1) / totalSteps) * 100 : 0
 
-  const serviceProducts = data.products.filter(p => p.category === 'service')
+  const serviceProducts = data.products.filter(p =>
+    p.category === 'service' &&
+    data.pricingTiers.some(t => t.product_id === p.id)
+  )
   const showBack = !introActive && (
     activeTab === 'services'
       ? !!selectedProduct && step !== 'confirmation'

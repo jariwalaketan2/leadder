@@ -80,10 +80,8 @@ export async function GET(
     const explicitlyDisabledIds = new Set(
       allProductConfigs?.filter(c => c.is_enabled === false).map(c => c.product_id) || []
     )
-    const configuredProductIds = new Set(pricingTiers?.map(t => t.product_id) || [])
-    const configuredProducts = products?.filter(p =>
-      configuredProductIds.has(p.id) && !explicitlyDisabledIds.has(p.id)
-    ) || []
+    // Return ALL active non-disabled products so HVAC flows work even before pricing is set up
+    const visibleProducts = products?.filter(p => !explicitlyDisabledIds.has(p.id)) || []
 
     // Only pass enabled configs as pricing modifiers
     const productConfigs = allProductConfigs?.filter(c => c.is_enabled !== false) || []
@@ -102,7 +100,7 @@ export async function GET(
         primaryColor: business.primary_color,
         logoUrl: business.logo_url,
       },
-      products: configuredProducts,
+      products: visibleProducts,
       pricingTiers: pricingTiers || [],
       productConfigs: productConfigs || [],
       systemConfigs: systemConfigs || [],
