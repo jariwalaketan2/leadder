@@ -47,11 +47,9 @@ export interface PricingTier {
   capacity_option_id: string | null
   tier: 'good' | 'better' | 'best'
   price: number
-  label: string | null
   warranty_years: number | null
   features: string[]
   scope_of_work: string | null
-  image_url: string | null
   is_active: boolean
   created_at: string
   updated_at: string
@@ -78,11 +76,6 @@ export interface Lead {
   price_good: number | null
   price_better: number | null
   price_best: number | null
-  status: 'new' | 'contacted' | 'quoted' | 'won' | 'lost'
-  notes: string | null
-  ghl_contact_id: string | null
-  ghl_opportunity_id: string | null
-  ghl_synced_at: string | null
   created_at: string
   updated_at: string
 }
@@ -90,20 +83,12 @@ export interface Lead {
 export interface BusinessSettings {
   id: string
   business_id: string
-  ghl_api_key: string | null
-  ghl_location_id: string | null
-  ghl_pipeline_id: string | null
-  ghl_stage_id: string | null
-  ghl_enabled: boolean
   widget_enabled: boolean
   widget_title: string
   widget_subtitle: string
   widget_thank_you_message: string
-  widget_show_financing: boolean
   price_range_pct: number
   webhook_url: string | null
-  email_notifications: boolean
-  notification_email: string | null
   created_at: string
   updated_at: string
 }
@@ -131,9 +116,7 @@ export interface TierSystemConfiguration {
   tier: 'good' | 'better' | 'best'
   efficiency_description: string | null
   warranty_years: number | null
-  warranty_terms: string | null
   scope_of_work: string | null
-  image_url: string | null
   created_at: string
   updated_at: string
 }

@@ -51,25 +51,21 @@ export function SystemConfigPanel({
   const [configs, setConfigs] = useState<Record<TierType, {
     efficiency_description: string
     warranty_years: string
-    warranty_terms: string
     scope_of_work: string
   }>>({
     good: {
       efficiency_description: getConfig(systemConfig, 'good').efficiency_description ?? '',
       warranty_years: getConfig(systemConfig, 'good').warranty_years?.toString() ?? '',
-      warranty_terms: getConfig(systemConfig, 'good').warranty_terms ?? '',
       scope_of_work: getConfig(systemConfig, 'good').scope_of_work ?? '',
     },
     better: {
       efficiency_description: getConfig(systemConfig, 'better').efficiency_description ?? '',
       warranty_years: getConfig(systemConfig, 'better').warranty_years?.toString() ?? '',
-      warranty_terms: getConfig(systemConfig, 'better').warranty_terms ?? '',
       scope_of_work: getConfig(systemConfig, 'better').scope_of_work ?? '',
     },
     best: {
       efficiency_description: getConfig(systemConfig, 'best').efficiency_description ?? '',
       warranty_years: getConfig(systemConfig, 'best').warranty_years?.toString() ?? '',
-      warranty_terms: getConfig(systemConfig, 'best').warranty_terms ?? '',
       scope_of_work: getConfig(systemConfig, 'best').scope_of_work ?? '',
     },
   })
@@ -94,7 +90,6 @@ export function SystemConfigPanel({
         tier,
         efficiency_description: cfg.efficiency_description || null,
         warranty_years: cfg.warranty_years ? parseInt(cfg.warranty_years) : null,
-        warranty_terms: cfg.warranty_terms || null,
         scope_of_work: cfg.scope_of_work || null,
         updated_at: new Date().toISOString(),
       }
@@ -259,15 +254,6 @@ export function SystemConfigPanel({
                     onChange={e => updateField(tier, 'warranty_years', e.target.value)}
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Warranty Terms</Label>
-                <Input
-                  placeholder="e.g. Parts & labor, 10-year manufacturer warranty"
-                  value={configs[tier].warranty_terms}
-                  onChange={e => updateField(tier, 'warranty_terms', e.target.value)}
-                />
               </div>
 
               <div className="space-y-2">
