@@ -299,11 +299,12 @@ function FormInput({ icon: Icon, ...props }: React.InputHTMLAttributes<HTMLInput
 
 export function WidgetFlow({ data }: { data: WidgetData }) {
   // Guided-flow state
-  const [activeTab, setActiveTab]     = useState<Tab>('hvac')
-  const [systemType, setSystemType]   = useState<SystemType | null>(null)
-  const [heatSource, setHeatSource]   = useState<HeatSource | null>(null)
+  const [activeTab, setActiveTab]       = useState<Tab>('hvac')
+  const [introActive, setIntroActive]   = useState(true)
+  const [systemType, setSystemType]     = useState<SystemType | null>(null)
+  const [heatSource, setHeatSource]     = useState<HeatSource | null>(null)
   const [systemConfig, setSystemConfig] = useState<string | null>(null)
-  const [step, setStep]               = useState<Step>('system_type')
+  const [step, setStep]                 = useState<Step>('system_type')
 
   // Product / form state
   const [selectedProduct, setSelectedProduct]   = useState<Product | null>(null)
@@ -406,7 +407,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
       steps.push('system_config')
     }
     if (selectedProduct) {
-      const isService = selectedProduct.category === 'service' || !selectedProduct.capacity_options?.length
+      const isService = selectedProduct.category === 'service'
       if (selectedProduct.capacity_options?.length) steps.push('capacity')
       if (hasLocationStep(selectedProduct.id)) steps.push('location')
       if (!isService) steps.push('qty')
@@ -430,6 +431,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab)
+    setIntroActive(true)
     setSystemType(null); setHeatSource(null); setSystemConfig(null)
     resetProductState()
     setFullName(''); setEmail(''); setPhone(''); setCityZip('')
@@ -452,7 +454,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
         setSelectedProduct(product)
         // Build steps explicitly — state hasn't flushed yet
         const steps: Step[] = ['system_type', 'heat_source']
-        const isService = product.category === 'service' || !product.capacity_options?.length
+        const isService = product.category === 'service'
         if (product.capacity_options?.length) steps.push('capacity')
         if (hasLocationStep(product.id)) steps.push('location')
         if (!isService) steps.push('qty')
@@ -477,7 +479,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
     } else if (systemType === 'ac') {
       steps.push('system_config')
     }
-    const isService = product.category === 'service' || !product.capacity_options?.length
+    const isService = product.category === 'service'
     if (product.capacity_options?.length) steps.push('capacity')
     if (hasLocationStep(product.id)) steps.push('location')
     if (!isService) steps.push('qty')
@@ -496,7 +498,10 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
     }
     const activeSteps = getActiveSteps()
     const currentIndex = activeSteps.indexOf(step)
-    if (currentIndex <= 0) return
+    if (currentIndex <= 0) {
+      // Back from system_type → intro
+      setIntroActive(true); return
+    }
     const prevStep = activeSteps[currentIndex - 1]
     switch (prevStep) {
       case 'system_type':  setHeatSource(null); setSystemConfig(null); resetProductState(); break
@@ -516,7 +521,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
     const parts = fullName.trim().split(' ')
     const firstName = parts[0]
     const lastName = parts.slice(1).join(' ') || parts[0]
-    const isService = selectedProduct?.category === 'service' || !selectedProduct?.capacity_options?.length
+    const isService = selectedProduct?.category === 'service'
     let priceGood: number | null = null, priceBetter: number | null = null, priceBest: number | null = null
     let quotedPrice: number | null = null, tierSelected: string | null = null, pricingTierId: string | null = null
     if (isService && selectedTier) {
@@ -558,11 +563,13 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
     : currentStepIndex >= 0 && totalSteps > 0 ? ((currentStepIndex + 1) / totalSteps) * 100 : 0
 
   const serviceProducts = data.products.filter(p => p.category === 'service')
-  const showBack = activeTab === 'services'
-    ? !!selectedProduct && step !== 'confirmation'
-    : step !== 'system_type' && step !== 'confirmation'
+  const showBack = !introActive && (
+    activeTab === 'services'
+      ? !!selectedProduct && step !== 'confirmation'
+      : step !== 'confirmation'
+  )
 
-  const inStepFlow = step !== 'confirmation' &&
+  const inStepFlow = !introActive && step !== 'confirmation' &&
     (activeTab === 'hvac' || (activeTab === 'services' && !!selectedProduct))
 
   // ── Render ────────────────────────────────────────────────────────────────────
@@ -595,8 +602,44 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
       {/* ── Main Content ── */}
       <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-6">
 
+        {/* HVAC intro */}
+        {activeTab === 'hvac' && introActive && (
+          <div className="text-center py-20 max-w-lg mx-auto">
+            <div className="w-20 h-20 rounded-2xl bg-indigo-600 flex items-center justify-center mx-auto mb-6 shadow-md">
+              <Snowflake className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-[#1a1a3e] mb-3">{data.settings.widget_title}</h1>
+            <p className="text-gray-500 text-base mb-10 max-w-sm mx-auto leading-relaxed">{data.settings.widget_subtitle}</p>
+            <button
+              onClick={() => setIntroActive(false)}
+              className="px-10 py-3.5 rounded-full bg-indigo-600 text-white font-semibold text-base hover:bg-indigo-700 transition-colors shadow-sm"
+            >
+              Get Started
+            </button>
+          </div>
+        )}
+
+        {/* Services intro */}
+        {activeTab === 'services' && introActive && (
+          <div className="text-center py-20 max-w-lg mx-auto">
+            <div className="w-20 h-20 rounded-2xl bg-indigo-600 flex items-center justify-center mx-auto mb-6 shadow-md">
+              <Wrench className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-[#1a1a3e] mb-3">HVAC Services</h1>
+            <p className="text-gray-500 text-base mb-10 max-w-sm mx-auto leading-relaxed">
+              Professional HVAC service and maintenance for your home or business
+            </p>
+            <button
+              onClick={() => setIntroActive(false)}
+              className="px-10 py-3.5 rounded-full bg-indigo-600 text-white font-semibold text-base hover:bg-indigo-700 transition-colors shadow-sm"
+            >
+              View Services
+            </button>
+          </div>
+        )}
+
         {/* Services: picker (no product selected yet) */}
-        {activeTab === 'services' && !selectedProduct && (
+        {activeTab === 'services' && !introActive && !selectedProduct && (
           <>
             <div className="text-center mb-10">
               <h2 className="text-2xl font-bold text-[#1a1a3e]">HVAC Services</h2>
@@ -607,7 +650,6 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
                 <p className="text-center text-gray-400 text-sm col-span-2">No services currently available.</p>
               ) : serviceProducts.map(service => {
                 const IconComponent = PRODUCT_ICONS[service.icon] ?? Wrench
-                const price = formatServicePrice(service.id)
                 return (
                   <div
                     key={service.id}
@@ -619,9 +661,8 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
                     </div>
                     <h3 className="font-semibold text-[#1a1a3e] mb-1">{service.name}</h3>
                     {service.description && (
-                      <p className="text-sm text-gray-500 mb-3 leading-relaxed">{service.description}</p>
+                      <p className="text-sm text-gray-500 leading-relaxed">{service.description}</p>
                     )}
-                    {price && <p className="text-lg font-bold text-indigo-600">{price}</p>}
                   </div>
                 )
               })}
@@ -631,7 +672,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
 
         {/* Confirmation */}
         {step === 'confirmation' && submitted && (() => {
-          const isService = selectedProduct?.category === 'service' || !selectedProduct?.capacity_options?.length
+          const isService = selectedProduct?.category === 'service'
           const tiers = getTiersForSelection()
           const capLine = selectedCapacity
             ? selectedCapacity.sqft
