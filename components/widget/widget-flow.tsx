@@ -72,6 +72,13 @@ interface WidgetData {
 
 type Step = 'capacity' | 'location' | 'qty' | 'pricing' | 'contact' | 'confirmation'
 
+// Confirmation card tier colors: green / amber / blue
+const CONF_TIER_STYLES: Record<string, { badge: string; headerBg: string; priceCls: string }> = {
+  good:   { badge: 'bg-green-100 text-green-700',  headerBg: 'bg-green-50  border-green-200',  priceCls: 'text-green-700'  },
+  better: { badge: 'bg-amber-100 text-amber-700',  headerBg: 'bg-amber-50  border-amber-200',  priceCls: 'text-amber-700'  },
+  best:   { badge: 'bg-blue-100  text-blue-700',   headerBg: 'bg-blue-50   border-blue-200',   priceCls: 'text-blue-700'   },
+}
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const PRODUCT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -170,6 +177,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
   const [consent, setConsent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [expandedTiers, setExpandedTiers] = useState<Set<string>>(new Set())
 
   // ── Helpers ──
 
@@ -197,7 +205,8 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
     if (product?.capacity_options?.length) steps.push('capacity')
     if (id && hasLocationStep(id)) steps.push('location')
     if (!isService) steps.push('qty')
-    steps.push('pricing', 'contact', 'confirmation')
+    if (isService) steps.push('pricing') // services: single price confirmation
+    steps.push('contact', 'confirmation')
     return steps
   }
 
@@ -214,24 +223,29 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
     return map[location] ?? 0
   }
 
-  const formatPrice = (price: number): string => {
+  // Returns the adjusted base price (location + qty) without range formatting — used for DB storage
+  const calcAdjustedPrice = (price: number): number => {
     const cfg = selectedProduct ? getProductConfig(selectedProduct.id) : undefined
-    const pct = cfg?.price_range_pct ?? data.settings.price_range_pct ?? 0
     const locationCost = selectedProduct ? getLocationCost(selectedProduct.id, selectedLocation) : 0
     const discountPct = cfg?.multi_unit_discount_pct ?? 0
-
     let base = price + locationCost
     if (unitQty > 1 && discountPct > 0) {
       base = base * unitQty * (1 - discountPct / 100)
     } else if (unitQty > 1) {
       base = base * unitQty
     }
+    return Math.round(base)
+  }
 
+  const formatPrice = (price: number): string => {
+    const cfg = selectedProduct ? getProductConfig(selectedProduct.id) : undefined
+    const pct = cfg?.price_range_pct ?? data.settings.price_range_pct ?? 0
+    const base = calcAdjustedPrice(price)
     if (pct > 0) {
       const high = Math.round(base * (1 + pct / 100))
-      return `$${Math.round(base).toLocaleString()} – $${high.toLocaleString()}`
+      return `$${base.toLocaleString()} – $${high.toLocaleString()}`
     }
-    return `$${Math.round(base).toLocaleString()}`
+    return `$${base.toLocaleString()}`
   }
 
   const getTiersForSelection = () => {
@@ -266,6 +280,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
     setSelectedLocation('')
     setUnitQty(1)
     setSelectedTier(null)
+    setExpandedTiers(new Set())
   }
 
   const handleStartEstimate = () => {
@@ -284,10 +299,10 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
       return
     }
     const prevStep = activeSteps[currentIndex - 1]
-    if (prevStep === 'capacity') { setSelectedCapacity(null); setSelectedLocation(''); setUnitQty(1); setSelectedTier(null) }
-    else if (prevStep === 'location') { setSelectedLocation(''); setUnitQty(1); setSelectedTier(null) }
-    else if (prevStep === 'qty') { setUnitQty(1); setSelectedTier(null) }
-    else if (prevStep === 'pricing') { setSelectedTier(null) }
+    if (prevStep === 'capacity') { setSelectedCapacity(null); setSelectedLocation(''); setUnitQty(1) }
+    else if (prevStep === 'location') { setSelectedLocation(''); setUnitQty(1) }
+    else if (prevStep === 'qty') { setUnitQty(1) }
+    else if (prevStep === 'pricing') { setSelectedTier(null) } // services only
     setStep(prevStep)
   }
 
@@ -300,6 +315,28 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
     const firstName = parts[0]
     const lastName = parts.slice(1).join(' ') || parts[0]
 
+    const isService = selectedProduct?.category === 'service' || !selectedProduct?.capacity_options?.length
+
+    // For equipment: calculate all 3 adjusted prices; for services: use selectedTier
+    let priceGood: number | null = null
+    let priceBetter: number | null = null
+    let priceBest: number | null = null
+    let quotedPrice: number | null = null
+    let tierSelected: string | null = null
+    let pricingTierId: string | null = null
+
+    if (isService && selectedTier) {
+      quotedPrice = calcAdjustedPrice(selectedTier.price)
+      tierSelected = selectedTier.tier
+      pricingTierId = selectedTier.id
+    } else if (!isService) {
+      const tiers = getTiersForSelection()
+      const tierMap = Object.fromEntries(tiers.map(t => [t.tier, t]))
+      priceGood   = tierMap.good   ? calcAdjustedPrice(tierMap.good.price)   : null
+      priceBetter = tierMap.better ? calcAdjustedPrice(tierMap.better.price) : null
+      priceBest   = tierMap.best   ? calcAdjustedPrice(tierMap.best.price)   : null
+    }
+
     try {
       const res = await fetch('/api/leads', {
         method: 'POST',
@@ -308,11 +345,14 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
           businessId: data.business.id,
           productId: selectedProduct?.id,
           capacityOptionId: selectedCapacity?.id,
-          pricingTierId: selectedTier?.id,
+          pricingTierId,
           productName: selectedProduct?.name,
           capacityLabel: selectedCapacity?.label,
-          tierSelected: selectedTier?.tier,
-          quotedPrice: selectedTier?.price,
+          tierSelected,
+          quotedPrice,
+          priceGood,
+          priceBetter,
+          priceBest,
           firstName,
           lastName,
           email,
@@ -430,50 +470,125 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
         })()}
 
         {/* Confirmation */}
-        {selectedProduct && !introActive && step === 'confirmation' && submitted && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-6">
-              <Check className="w-8 h-8 text-indigo-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-[#1a1a3e] mb-2">You&apos;re all set!</h2>
-            <p className="text-gray-500 max-w-sm mx-auto mb-8">{data.settings.widget_thank_you_message}</p>
+        {selectedProduct && !introActive && step === 'confirmation' && submitted && (() => {
+          const isService = selectedProduct.category === 'service' || !selectedProduct.capacity_options?.length
+          const tiers = getTiersForSelection()
+          const capLine = selectedCapacity
+            ? selectedCapacity.sqft
+              ? `${selectedCapacity.label} • ${selectedCapacity.sqft} sq ft`
+              : selectedCapacity.label
+            : null
 
-            <div className="max-w-sm mx-auto bg-white rounded-2xl border border-gray-200 p-5 text-left">
-              <h3 className="font-semibold text-[#1a1a3e] mb-3">Your Quote</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Service</span>
-                  <span className="font-medium text-[#1a1a3e]">{selectedProduct?.name}</span>
+          return (
+            <div className="py-8">
+              {/* Header */}
+              <div className="text-center mb-10">
+                <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-5">
+                  <Check className="w-8 h-8 text-indigo-600" />
                 </div>
-                {selectedCapacity && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Size</span>
-                    <span className="font-medium text-[#1a1a3e]">
-                      {selectedCapacity.label}
-                      {selectedCapacity.value && <span className="text-gray-400 ml-1">({selectedCapacity.value} {selectedCapacity.unit})</span>}
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Package</span>
-                  <span className="font-medium text-[#1a1a3e] capitalize">{selectedTier?.tier}</span>
-                </div>
-                {unitQty > 1 && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Units</span>
-                    <span className="font-medium text-[#1a1a3e]">{unitQty}</span>
-                  </div>
-                )}
-                {selectedTier && (
-                  <div className="flex justify-between items-center pt-3 mt-1 border-t border-gray-100">
-                    <span className="text-gray-500">Estimated Price</span>
-                    <span className="text-xl font-bold text-indigo-600">{formatPrice(selectedTier.price)}</span>
-                  </div>
-                )}
+                <h2 className="text-2xl font-bold text-[#1a1a3e] mb-2">You&apos;re all set!</h2>
+                <p className="text-gray-500 max-w-sm mx-auto text-sm">{data.settings.widget_thank_you_message}</p>
               </div>
+
+              {/* Equipment — 3 informational tier cards */}
+              {!isService && tiers.length > 0 && (
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {tiers.map(tier => {
+                    const ts = CONF_TIER_STYLES[tier.tier] ?? CONF_TIER_STYLES.good
+                    const eff = getEfficiencyDescription(selectedProduct.id, tier.tier)
+                    const scope = tier.scope_of_work?.trim() ?? ''
+                    const isExpanded = expandedTiers.has(tier.tier)
+                    const PREVIEW = 120
+
+                    return (
+                      <div key={tier.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col">
+                        {/* Card header */}
+                        <div className={`px-5 pt-4 pb-3 border-b ${ts.headerBg}`}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${ts.badge}`}>
+                              {tier.tier}
+                            </span>
+                            {tier.tier === 'better' && (
+                              <span className="text-xs bg-amber-500 text-white font-semibold px-2 py-0.5 rounded-full">
+                                Most Popular
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-semibold text-[#1a1a3e] text-sm">{selectedProduct.name}</p>
+                          {capLine && <p className="text-xs text-gray-400 mt-0.5">{capLine}</p>}
+                        </div>
+
+                        {/* Card body */}
+                        <div className="p-5 space-y-4 flex-1">
+                          {/* Estimated price */}
+                          <div>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">Estimated Price</p>
+                            <p className={`text-xl font-bold ${ts.priceCls}`}>{formatPrice(tier.price)}</p>
+                          </div>
+
+                          {/* Unit efficiency */}
+                          {eff && (
+                            <div className="bg-gray-50 rounded-xl p-3">
+                              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Unit Efficiency</p>
+                              <p className="text-sm text-gray-600 leading-relaxed">{eff}</p>
+                            </div>
+                          )}
+
+                          {/* What's included */}
+                          {scope && (
+                            <div>
+                              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">What&apos;s Included</p>
+                              <p className="text-sm text-gray-600 leading-relaxed">
+                                {isExpanded || scope.length <= PREVIEW
+                                  ? scope
+                                  : scope.slice(0, PREVIEW) + '…'}
+                              </p>
+                              {scope.length > PREVIEW && (
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedTiers(prev => {
+                                    const next = new Set(prev)
+                                    isExpanded ? next.delete(tier.tier) : next.add(tier.tier)
+                                    return next
+                                  })}
+                                  className="text-xs text-indigo-600 hover:text-indigo-700 mt-1.5 font-medium"
+                                >
+                                  {isExpanded ? 'See Less' : 'See More'}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Equipment — no tiers configured */}
+              {!isService && tiers.length === 0 && (
+                <p className="text-center text-gray-400 text-sm">Contact us for a custom quote.</p>
+              )}
+
+              {/* Service — simple single-price summary */}
+              {isService && selectedTier && (
+                <div className="max-w-sm mx-auto bg-white rounded-2xl border border-gray-200 p-5 text-left">
+                  <h3 className="font-semibold text-[#1a1a3e] mb-3">Your Quote</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Service</span>
+                      <span className="font-medium text-[#1a1a3e]">{selectedProduct.name}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-3 mt-1 border-t border-gray-100">
+                      <span className="text-gray-500">Estimated Price</span>
+                      <span className="text-xl font-bold text-indigo-600">{formatPrice(selectedTier.price)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* Steps */}
         {selectedProduct && !introActive && step !== 'confirmation' && (

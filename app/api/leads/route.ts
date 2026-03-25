@@ -27,6 +27,9 @@ export async function POST(request: Request) {
       capacityLabel,
       tierSelected,
       quotedPrice,
+      priceGood,
+      priceBetter,
+      priceBest,
     } = body
 
     if (!businessId || !firstName || !lastName || !email || !phone) {
@@ -55,6 +58,9 @@ export async function POST(request: Request) {
         capacity_label: capacityLabel || null,
         tier_selected: tierSelected || null,
         quoted_price: quotedPrice || null,
+        price_good: priceGood || null,
+        price_better: priceBetter || null,
+        price_best: priceBest || null,
         status: 'new',
       })
       .select()
@@ -120,6 +126,9 @@ async function fireWebhookAsync(businessId: string, lead: Record<string, unknown
           capacityLabel: lead.capacity_label,
           tierSelected: lead.tier_selected,
           quotedPrice: lead.quoted_price,
+          priceGood: lead.price_good,
+          priceBetter: lead.price_better,
+          priceBest: lead.price_best,
           submittedAt: lead.created_at,
         },
       }),

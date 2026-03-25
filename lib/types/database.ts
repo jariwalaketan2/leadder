@@ -75,6 +75,9 @@ export interface Lead {
   capacity_label: string | null
   tier_selected: string | null
   quoted_price: number | null
+  price_good: number | null
+  price_better: number | null
+  price_best: number | null
   status: 'new' | 'contacted' | 'quoted' | 'won' | 'lost'
   notes: string | null
   ghl_contact_id: string | null

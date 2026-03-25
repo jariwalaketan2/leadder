@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Lead } from '@/lib/types/database'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -12,22 +12,9 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { 
-  MoreHorizontal, 
-  Mail, 
-  Phone, 
-  MapPin,
-  ChevronDown,
-  Users
-} from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Mail, Phone, Users, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -35,36 +22,63 @@ interface LeadsTableProps {
   leads: Lead[]
 }
 
-const statusColors: Record<string, string> = {
-  new: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  contacted: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-  quoted: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-  won: 'bg-green-500/10 text-green-500 border-green-500/20',
-  lost: 'bg-red-500/10 text-red-500 border-red-500/20',
-}
-
 export function LeadsTable({ leads: initialLeads }: LeadsTableProps) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
+  const [search, setSearch] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [deleting, setDeleting] = useState(false)
   const supabase = createClient()
 
-  const handleStatusChange = async (leadId: string, newStatus: Lead['status']) => {
+  const filteredLeads = useMemo(() => {
+    if (!search.trim()) return leads
+    const q = search.toLowerCase()
+    return leads.filter(l =>
+      `${l.first_name} ${l.last_name}`.toLowerCase().includes(q) ||
+      l.email.toLowerCase().includes(q) ||
+      l.phone.toLowerCase().includes(q)
+    )
+  }, [leads, search])
+
+  const allSelected = filteredLeads.length > 0 && filteredLeads.every(l => selectedIds.has(l.id))
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedIds(prev => {
+        const next = new Set(prev)
+        filteredLeads.forEach(l => next.delete(l.id))
+        return next
+      })
+    } else {
+      setSelectedIds(prev => {
+        const next = new Set(prev)
+        filteredLeads.forEach(l => next.add(l.id))
+        return next
+      })
+    }
+  }
+
+  const toggleOne = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return
+    setDeleting(true)
     try {
-      const { error } = await supabase
-        .from('leads')
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
-        .eq('id', leadId)
-
+      const ids = [...selectedIds]
+      const { error } = await supabase.from('leads').delete().in('id', ids)
       if (error) throw error
-
-      setLeads(prev => 
-        prev.map(lead => 
-          lead.id === leadId ? { ...lead, status: newStatus } : lead
-        )
-      )
-      toast.success('Status updated')
-    } catch (error) {
-      console.error('Error updating status:', error)
-      toast.error('Failed to update status')
+      setLeads(prev => prev.filter(l => !selectedIds.has(l.id)))
+      setSelectedIds(new Set())
+      toast.success(`${ids.length} lead${ids.length > 1 ? 's' : ''} deleted`)
+    } catch {
+      toast.error('Failed to delete leads')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -78,7 +92,6 @@ export function LeadsTable({ leads: initialLeads }: LeadsTableProps) {
           <h3 className="text-lg font-semibold text-foreground mb-2">No leads yet</h3>
           <p className="text-muted-foreground text-center max-w-md">
             When customers submit quotes through your widget, they&apos;ll appear here.
-            Make sure to configure your pricing and embed the widget on your website.
           </p>
         </CardContent>
       </Card>
@@ -88,144 +101,146 @@ export function LeadsTable({ leads: initialLeads }: LeadsTableProps) {
   return (
     <Card className="bg-card border-border">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <CardTitle className="text-base font-semibold text-foreground">
-            All Leads ({leads.length})
+            Leads ({leads.length})
           </CardTitle>
+          <div className="flex items-center gap-2 flex-1 max-w-xs">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Search by name, email, phone…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9 h-9 text-sm"
+              />
+            </div>
+            {selectedIds.size > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleBulkDelete}
+                disabled={deleting}
+                className="shrink-0"
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                Delete {selectedIds.size}
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
-              <TableHead className="text-muted-foreground">Customer</TableHead>
+              <TableHead className="w-10 pl-4">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  className="w-4 h-4 accent-primary cursor-pointer"
+                />
+              </TableHead>
+              <TableHead className="text-muted-foreground">Name</TableHead>
               <TableHead className="text-muted-foreground">Contact</TableHead>
-              <TableHead className="text-muted-foreground">Service</TableHead>
-              <TableHead className="text-muted-foreground">Quote</TableHead>
-              <TableHead className="text-muted-foreground">Status</TableHead>
-              <TableHead className="text-muted-foreground">Date</TableHead>
-              <TableHead className="text-muted-foreground w-[50px]"></TableHead>
+              <TableHead className="text-muted-foreground">System Type</TableHead>
+              <TableHead className="text-muted-foreground">Price</TableHead>
+              <TableHead className="text-muted-foreground">Date Added</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {leads.map((lead) => (
-              <TableRow key={lead.id} className="border-border">
-                <TableCell>
-                  <div>
+            {filteredLeads.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground text-sm">
+                  No leads match your search.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredLeads.map(lead => (
+                <TableRow key={lead.id} className="border-border">
+                  <TableCell className="pl-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(lead.id)}
+                      onChange={() => toggleOne(lead.id)}
+                      className="w-4 h-4 accent-primary cursor-pointer"
+                    />
+                  </TableCell>
+
+                  {/* Name + capacity subtitle */}
+                  <TableCell>
                     <p className="font-medium text-foreground">
                       {lead.first_name} {lead.last_name}
                     </p>
-                    {lead.address && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                        <MapPin className="w-3 h-3" />
-                        {lead.city}, {lead.state}
-                      </p>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    <a 
-                      href={`mailto:${lead.email}`}
-                      className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
-                    >
-                      <Mail className="w-3 h-3" />
-                      {lead.email}
-                    </a>
-                    <a 
-                      href={`tel:${lead.phone}`}
-                      className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
-                    >
-                      <Phone className="w-3 h-3" />
-                      {lead.phone}
-                    </a>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div>
-                    <p className="text-sm text-foreground">{lead.product_name || '-'}</p>
                     {lead.capacity_label && (
-                      <p className="text-xs text-muted-foreground">{lead.capacity_label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{lead.capacity_label}</p>
                     )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div>
-                    {lead.quoted_price ? (
-                      <p className="font-medium text-foreground">
+                  </TableCell>
+
+                  {/* Contact */}
+                  <TableCell>
+                    <div className="space-y-1">
+                      <a
+                        href={`mailto:${lead.email}`}
+                        className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+                      >
+                        <Mail className="w-3 h-3 flex-shrink-0" />
+                        {lead.email}
+                      </a>
+                      <a
+                        href={`tel:${lead.phone}`}
+                        className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+                      >
+                        <Phone className="w-3 h-3 flex-shrink-0" />
+                        {lead.phone}
+                      </a>
+                    </div>
+                  </TableCell>
+
+                  {/* System type */}
+                  <TableCell>
+                    <p className="text-sm text-foreground">{lead.product_name || '—'}</p>
+                  </TableCell>
+
+                  {/* Price — 3-tier or single */}
+                  <TableCell>
+                    {lead.price_good || lead.price_better || lead.price_best ? (
+                      <div className="space-y-0.5">
+                        {lead.price_good != null && (
+                          <p className="text-sm font-medium text-green-600">
+                            G ${lead.price_good.toLocaleString()}
+                          </p>
+                        )}
+                        {lead.price_better != null && (
+                          <p className="text-sm font-medium text-amber-600">
+                            B ${lead.price_better.toLocaleString()}
+                          </p>
+                        )}
+                        {lead.price_best != null && (
+                          <p className="text-sm font-medium text-blue-600">
+                            ★ ${lead.price_best.toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    ) : lead.quoted_price != null ? (
+                      <p className="text-sm font-medium text-foreground">
                         ${lead.quoted_price.toLocaleString()}
                       </p>
                     ) : (
-                      <p className="text-muted-foreground">-</p>
+                      <p className="text-muted-foreground">—</p>
                     )}
-                    {lead.tier_selected && (
-                      <p className="text-xs text-muted-foreground capitalize">
-                        {lead.tier_selected} tier
-                      </p>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="h-auto p-0"
-                      >
-                        <Badge 
-                          variant="outline" 
-                          className={`capitalize cursor-pointer ${statusColors[lead.status]}`}
-                        >
-                          {lead.status}
-                          <ChevronDown className="w-3 h-3 ml-1" />
-                        </Badge>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      {(['new', 'contacted', 'quoted', 'won', 'lost'] as const).map((status) => (
-                        <DropdownMenuItem
-                          key={status}
-                          onClick={() => handleStatusChange(lead.id, status)}
-                          className="capitalize"
-                        >
-                          <Badge 
-                            variant="outline" 
-                            className={`${statusColors[status]} mr-2`}
-                          >
-                            {status}
-                          </Badge>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-                <TableCell>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
-                  </p>
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Mail className="w-4 h-4 mr-2" />
-                        Send Email
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Phone className="w-4 h-4 mr-2" />
-                        Call
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+
+                  {/* Date */}
+                  <TableCell>
+                    <p className="text-sm text-muted-foreground">
+                      {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+                    </p>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </CardContent>
