@@ -10,6 +10,8 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { BusinessProductConfig } from '@/lib/types/database'
 
+const supabase = createClient()
+
 interface LocationAdjustmentsProps {
   businessId: string
   productId: string
@@ -33,7 +35,6 @@ export function LocationAdjustments({
   productConfig,
   onConfigUpdate,
 }: LocationAdjustmentsProps) {
-  const supabase = createClient()
 
   const [values, setValues] = useState<Record<LocationKey, string>>({
     attic_additional_cost: productConfig?.attic_additional_cost?.toString() ?? '0',

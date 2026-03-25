@@ -15,6 +15,8 @@ import { PricingSettings } from './pricing-settings'
 import { LocationAdjustments } from './location-adjustments'
 import { ProductPricingModal } from './product-pricing-modal'
 
+const supabase = createClient()
+
 interface PricingGridProps {
   product: Product
   capacities: CapacityOption[]
@@ -35,7 +37,6 @@ export function PricingGridComponent({
   businessSlug,
 }: PricingGridProps) {
   const router = useRouter()
-  const supabase = createClient()
 
   const [localCapacities, setLocalCapacities] = useState<CapacityOption[]>(capacities)
   const [localTiers, setLocalTiers] = useState<PricingTier[]>(tiers)

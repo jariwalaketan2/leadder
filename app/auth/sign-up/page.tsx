@@ -11,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Zap, Loader2, AlertCircle } from 'lucide-react'
 
+const supabase = createClient()
+
 export default function SignUpPage() {
   const [businessName, setBusinessName] = useState('')
   const [email, setEmail] = useState('')
@@ -18,7 +20,6 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,7 +32,7 @@ export default function SignUpPage() {
         password,
         options: {
           emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
-            `${window.location.origin}/portal`,
+            `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/portal`,
           data: { business_name: businessName },
         },
       })

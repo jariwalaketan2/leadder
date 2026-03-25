@@ -18,6 +18,8 @@ import { Mail, Phone, MapPin, Users, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 
+const supabase = createClient()
+
 interface LeadsTableProps {
   leads: Lead[]
 }
@@ -27,7 +29,6 @@ export function LeadsTable({ leads: initialLeads }: LeadsTableProps) {
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
-  const supabase = createClient()
 
   const filteredLeads = useMemo(() => {
     if (!search.trim()) return leads

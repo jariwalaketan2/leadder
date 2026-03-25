@@ -16,6 +16,8 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { LogOut, User as UserIcon, Building } from 'lucide-react'
 
+const supabase = createClient()
+
 interface PortalHeaderProps {
   user: User
   business: Business
@@ -23,7 +25,6 @@ interface PortalHeaderProps {
 
 export function PortalHeader({ user, business }: PortalHeaderProps) {
   const router = useRouter()
-  const supabase = createClient()
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()

@@ -115,7 +115,7 @@ export async function GET(
         widget_title: settings?.widget_title || 'Get Your Instant Quote',
         widget_subtitle: settings?.widget_subtitle || 'Select your HVAC service to see pricing',
         widget_thank_you_message: settings?.widget_thank_you_message || "Thank you! We'll be in touch soon.",
-        price_range_pct: settings?.price_range_pct ?? 0,
+        price_range_pct: settings?.price_range_pct || 10,
       },
     })
   } catch (error) {

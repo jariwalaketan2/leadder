@@ -270,14 +270,15 @@ function SelectCard({ selected, onClick, children }: {
   children: React.ReactNode
 }) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      className={`cursor-pointer rounded-2xl border-2 bg-white p-5 text-center transition-all hover:border-indigo-400 ${
+      className={`w-full rounded-2xl border-2 bg-white p-5 text-center transition-all hover:border-indigo-400 ${
         selected ? 'border-indigo-600 shadow-sm' : 'border-gray-200'
       }`}
     >
       {children}
-    </div>
+    </button>
   )
 }
 
@@ -320,8 +321,9 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
   const [addrState, setAddrState] = useState('')
   const [zip, setZip]             = useState('')
   const [consent, setConsent]     = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted]   = useState(false)
+  const [submitting, setSubmitting]   = useState(false)
+  const [submitted, setSubmitted]     = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [scopeExpanded, setScopeExpanded] = useState(false)
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -355,7 +357,7 @@ const getLocationCost = (productId: string, location: string): number => {
 
   const formatPrice = (price: number): string => {
     const cfg = selectedProduct ? getProductConfig(selectedProduct.id) : undefined
-    const pct = cfg?.price_range_pct ?? data.settings.price_range_pct ?? 0
+    const pct = cfg?.price_range_pct || data.settings.price_range_pct || 10
     const base = calcAdjustedPrice(price)
     if (pct > 0) {
       const high = Math.round(base * (1 + pct / 100))
@@ -367,7 +369,7 @@ const getLocationCost = (productId: string, location: string): number => {
   const formatServicePrice = (productId: string): string | null => {
     const tier = data.pricingTiers.find(t => t.product_id === productId && t.capacity_option_id === null)
     if (!tier) return null
-    const pct = data.settings.price_range_pct ?? 0
+    const pct = data.settings.price_range_pct || 10
     if (pct > 0) return `$${tier.price.toLocaleString()} – $${Math.round(tier.price * (1 + pct / 100)).toLocaleString()}`
     return `$${tier.price.toLocaleString()}`
   }
@@ -514,6 +516,7 @@ const getLocationCost = (productId: string, location: string): number => {
     e.preventDefault()
     if (!consent) return
     setSubmitting(true)
+    setSubmitError(null)
     const parts = fullName.trim().split(' ')
     const firstName = parts[0]
     const lastName = parts.slice(1).join(' ') || parts[0]
@@ -544,8 +547,10 @@ const getLocationCost = (productId: string, location: string): number => {
         }),
       })
       if (res.ok) { setSubmitted(true); setStep('confirmation') }
+      else { setSubmitError('Something went wrong. Please try again.') }
     } catch (err) {
       console.error('Error submitting lead:', err)
+      setSubmitError('Something went wrong. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -1040,6 +1045,9 @@ const getLocationCost = (productId: string, location: string): number => {
                       Consent is not required to purchase.
                     </span>
                   </label>
+                  {submitError && (
+                    <p className="text-sm text-red-600 text-center">{submitError}</p>
+                  )}
                   <button
                     type="submit"
                     disabled={submitting || !consent}

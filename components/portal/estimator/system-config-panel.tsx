@@ -12,6 +12,8 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { TierSystemConfiguration, CapacityOption, PricingTier } from '@/lib/types/database'
 
+const supabase = createClient()
+
 interface SystemConfigPanelProps {
   businessId: string
   productId: string
@@ -45,7 +47,6 @@ export function SystemConfigPanel({
   onConfigUpdate,
   onTiersUpdate,
 }: SystemConfigPanelProps) {
-  const supabase = createClient()
 
   // Local editable state per tier
   const [configs, setConfigs] = useState<Record<TierType, {

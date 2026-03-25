@@ -10,6 +10,8 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { BusinessProductConfig } from '@/lib/types/database'
 
+const supabase = createClient()
+
 interface PricingSettingsProps {
   businessId: string
   productId: string
@@ -23,10 +25,9 @@ export function PricingSettings({
   productConfig,
   onConfigUpdate,
 }: PricingSettingsProps) {
-  const supabase = createClient()
 
   const [priceRangePct, setPriceRangePct] = useState(
-    productConfig?.price_range_pct?.toString() ?? '0'
+    productConfig?.price_range_pct?.toString() ?? '10'
   )
   const [multiUnitDiscount, setMultiUnitDiscount] = useState(
     productConfig?.multi_unit_discount_pct?.toString() ?? '0'
