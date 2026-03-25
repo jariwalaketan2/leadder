@@ -2,18 +2,21 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Zap, Loader2 } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Zap, Loader2, AlertCircle } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
   const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -22,19 +25,16 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
 
       if (error) {
         setError(error.message)
         return
       }
 
-      window.location.href = '/portal'
+      router.push('/portal')
     } catch {
-      setError('An unexpected error occurred')
+      setError('An unexpected error occurred. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -50,23 +50,22 @@ export default function LoginPage() {
           <span className="text-2xl font-bold text-foreground">HVAC Quotes</span>
         </div>
 
-        <Card className="border-border bg-card">
+        <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-card-foreground">Sign in</CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Enter your credentials to access your portal
-            </CardDescription>
+            <CardTitle className="text-2xl font-bold">Sign in</CardTitle>
+            <CardDescription>Enter your credentials to access your portal</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               {error && (
-                <div className="p-3 text-sm text-destructive-foreground bg-destructive/10 border border-destructive/20 rounded-md">
-                  {error}
-                </div>
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
-              
+
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-foreground">Email</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -74,17 +73,13 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-foreground">Password</Label>
-                  <Link 
-                    href="/auth/forgot-password" 
-                    className="text-sm text-primary hover:text-primary/80"
-                  >
+                  <Label htmlFor="password">Password</Label>
+                  <Link href="/auth/forgot-password" className="text-sm text-primary hover:text-primary/80">
                     Forgot password?
                   </Link>
                 </div>
@@ -95,15 +90,10 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="bg-input border-border text-foreground"
                 />
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                disabled={loading}
-              >
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

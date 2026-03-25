@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Zap, Loader2 } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Zap, Loader2, AlertCircle } from 'lucide-react'
 
 export default function SignUpPage() {
   const [businessName, setBusinessName] = useState('')
@@ -25,16 +26,13 @@ export default function SignUpPage() {
     setLoading(true)
 
     try {
-      // Sign up the user with metadata
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
             `${window.location.origin}/portal`,
-          data: {
-            business_name: businessName,
-          },
+          data: { business_name: businessName },
         },
       })
 
@@ -44,15 +42,10 @@ export default function SignUpPage() {
       }
 
       if (authData.user) {
-        // Create business record via API route (uses service role)
         const res = await fetch('/api/auth/create-business', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: authData.user.id,
-            businessName,
-            email,
-          }),
+          body: JSON.stringify({ userId: authData.user.id, businessName, email }),
         })
 
         if (!res.ok) {
@@ -64,7 +57,7 @@ export default function SignUpPage() {
         router.push('/auth/sign-up-success')
       }
     } catch {
-      setError('An unexpected error occurred')
+      setError('An unexpected error occurred. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -80,23 +73,22 @@ export default function SignUpPage() {
           <span className="text-2xl font-bold text-foreground">HVAC Quotes</span>
         </div>
 
-        <Card className="border-border bg-card">
+        <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-card-foreground">Create account</CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Set up your HVAC business portal in minutes
-            </CardDescription>
+            <CardTitle className="text-2xl font-bold">Create account</CardTitle>
+            <CardDescription>Set up your HVAC business portal in minutes</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignUp} className="space-y-4">
               {error && (
-                <div className="p-3 text-sm text-destructive-foreground bg-destructive/10 border border-destructive/20 rounded-md">
-                  {error}
-                </div>
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="businessName" className="text-foreground">Business Name</Label>
+                <Label htmlFor="businessName">Business Name</Label>
                 <Input
                   id="businessName"
                   type="text"
@@ -104,12 +96,11 @@ export default function SignUpPage() {
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
                   required
-                  className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-foreground">Email</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -117,12 +108,11 @@ export default function SignUpPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-input border-border text-foreground placeholder:text-muted-foreground"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-foreground">Password</Label>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -131,16 +121,11 @@ export default function SignUpPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="bg-input border-border text-foreground"
                 />
                 <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                disabled={loading}
-              >
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
