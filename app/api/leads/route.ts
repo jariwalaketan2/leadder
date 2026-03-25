@@ -83,15 +83,25 @@ export async function POST(request: Request) {
 
 async function fireWebhookAsync(businessId: string, lead: Record<string, unknown>) {
   try {
-    const { data: settings } = await supabaseAdmin
+    const { data: settings, error: settingsError } = await supabaseAdmin
       .from('business_settings')
       .select('webhook_url')
       .eq('business_id', businessId)
       .single()
 
-    if (!settings?.webhook_url) return
+    if (settingsError) {
+      console.error('[webhook] Failed to fetch business settings:', settingsError.message)
+      return
+    }
 
-    await fetch(settings.webhook_url, {
+    if (!settings?.webhook_url) {
+      console.log('[webhook] No webhook_url configured for business', businessId)
+      return
+    }
+
+    console.log('[webhook] Firing to:', settings.webhook_url)
+
+    const res = await fetch(settings.webhook_url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -114,7 +124,13 @@ async function fireWebhookAsync(businessId: string, lead: Record<string, unknown
         },
       }),
     })
+
+    if (!res.ok) {
+      console.error('[webhook] Delivery failed — HTTP', res.status, await res.text().catch(() => ''))
+    } else {
+      console.log('[webhook] Delivered successfully — HTTP', res.status)
+    }
   } catch (err) {
-    console.error('Webhook delivery failed for business', businessId, err)
+    console.error('[webhook] Network error for business', businessId, err)
   }
 }

@@ -5,7 +5,7 @@ import { Product, CapacityOption, PricingTier, TierSystemConfiguration, Business
 import { getSqftRange } from '@/lib/utils/hvac'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Loader2, ExternalLink, CheckSquare, Square, DollarSign, Edit } from 'lucide-react'
+import { ArrowLeft, Loader2, ExternalLink, DollarSign, Edit } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
@@ -13,7 +13,6 @@ import { PricingCell } from './pricing-cell'
 import { SystemConfigPanel } from './system-config-panel'
 import { PricingSettings } from './pricing-settings'
 import { LocationAdjustments } from './location-adjustments'
-import { BulkPriceEditor, SelectedCell } from './bulk-price-editor'
 import { ProductPricingModal } from './product-pricing-modal'
 
 interface PricingGridProps {
@@ -46,11 +45,6 @@ export function PricingGridComponent({
   const [togglingCapacity, setTogglingCapacity] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [showPricingModal, setShowPricingModal] = useState(false)
-
-  // Bulk selection
-  const [selectedCells, setSelectedCells] = useState<SelectedCell[]>([])
-  const [bulkOpen, setBulkOpen] = useState(false)
-  const isSelecting = selectedCells.length > 0
 
   const tierOrder: ('good' | 'better' | 'best')[] = ['good', 'better', 'best']
   const tierColors = {
@@ -153,19 +147,6 @@ export function PricingGridComponent({
     }
   }
 
-  // Cell selection for bulk editor
-  const toggleCellSelection = (capacityId: string, tier: 'good' | 'better' | 'best') => {
-    setSelectedCells(prev => {
-      const exists = prev.find(c => c.capacityId === capacityId && c.tier === tier)
-      return exists
-        ? prev.filter(c => !(c.capacityId === capacityId && c.tier === tier))
-        : [...prev, { capacityId, tier }]
-    })
-  }
-
-  const isCellSelected = (capacityId: string, tier: 'good' | 'better' | 'best') =>
-    selectedCells.some(c => c.capacityId === capacityId && c.tier === tier)
-
   const isService = product.category === 'service'
   const allCapacitiesDisabled = !isService && localCapacities.length > 0 && localCapacities.every(c => !c.is_enabled)
 
@@ -204,13 +185,6 @@ export function PricingGridComponent({
             <ExternalLink className="w-4 h-4 mr-2" />
             Preview Widget
           </Button>
-
-          {/* Bulk editor toggle - only for equipment with capacities */}
-          {!isService && selectedCells.length > 0 && (
-            <Button size="sm" onClick={() => setBulkOpen(true)}>
-              Edit {selectedCells.length} Selected
-            </Button>
-          )}
 
           {!isService && pendingChanges.size > 0 && (
             <Button onClick={handleSaveAll} disabled={isSaving} size="sm">
@@ -271,13 +245,7 @@ export function PricingGridComponent({
         </Card>
       )}
 
-      {!isService && isSelecting && (
-        <div className="text-xs text-muted-foreground">
-          Click cells to select/deselect. Hit "Edit X Selected" to bulk-update prices.
-        </div>
-      )}
-
-      {/* Pricing Grid — Task 3 (existing) + bulk select (Task 9) - Hide for services */}
+      {/* Pricing Grid - Hide for services */}
       {!isService && (
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
@@ -285,18 +253,7 @@ export function PricingGridComponent({
             <thead>
               <tr className="border-b border-border">
                 <th className="p-4 text-left font-semibold text-foreground bg-muted/50">
-                  <div className="flex items-center gap-2">
-                    Tier
-                    <button
-                      title={isSelecting ? 'Clear selection' : 'Enter select mode'}
-                      className="text-muted-foreground hover:text-foreground"
-                      onClick={() => setSelectedCells([])}
-                    >
-                      {isSelecting
-                        ? <CheckSquare className="w-4 h-4" />
-                        : <Square className="w-4 h-4" />}
-                    </button>
-                  </div>
+                  Tier
                 </th>
                 {localCapacities.map((capacity) => {
                   const toggling = togglingCapacity === capacity.id
@@ -346,12 +303,10 @@ export function PricingGridComponent({
                   {localCapacities.map((capacity) => {
                     const price = getPrice(capacity.id, tier)
                     const isDisabled = !capacity.is_enabled
-                    const isSelected = isCellSelected(capacity.id, tier)
                     return (
                       <td
                         key={`${tier}|${capacity.id}`}
-                        className={`p-2 ${isDisabled ? 'opacity-50' : ''} ${isSelected ? 'bg-primary/10' : ''}`}
-                        onClick={() => !isDisabled && toggleCellSelection(capacity.id, tier)}
+                        className={`p-2 ${isDisabled ? 'opacity-50' : ''}`}
                       >
                         <PricingCell
                           price={price}
@@ -401,20 +356,6 @@ export function PricingGridComponent({
         productId={product.id}
         productConfig={localProductConfig}
         onConfigUpdate={setLocalProductConfig}
-      />
-      )}
-
-      {/* Task 9: Bulk Price Editor - Only for equipment with capacities */}
-      {!isService && (
-      <BulkPriceEditor
-        open={bulkOpen}
-        onClose={() => { setBulkOpen(false); setSelectedCells([]) }}
-        selectedCells={selectedCells}
-        businessId={businessId}
-        productId={product.id}
-        currentTiers={localTiers}
-        capacities={localCapacities}
-        onTiersUpdate={setLocalTiers}
       />
       )}
 
