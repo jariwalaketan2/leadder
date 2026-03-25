@@ -44,7 +44,8 @@ export async function GET(
           label,
           value,
           unit,
-          display_order
+          display_order,
+          is_enabled
         )
       `)
       .eq('business_id', business.id)
@@ -81,7 +82,13 @@ export async function GET(
       allProductConfigs?.filter(c => c.is_enabled === false).map(c => c.product_id) || []
     )
     // Return ALL active non-disabled products so HVAC flows work even before pricing is set up
-    const visibleProducts = products?.filter(p => !explicitlyDisabledIds.has(p.id)) || []
+    // Strip disabled capacity options from each product
+    const visibleProducts = (products || [])
+      .filter(p => !explicitlyDisabledIds.has(p.id))
+      .map(p => ({
+        ...p,
+        capacity_options: p.capacity_options.filter(co => co.is_enabled !== false),
+      }))
 
     // Only pass enabled configs as pricing modifiers
     const productConfigs = allProductConfigs?.filter(c => c.is_enabled !== false) || []
