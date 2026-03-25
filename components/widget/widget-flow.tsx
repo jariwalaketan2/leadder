@@ -683,7 +683,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
                         onClick={() => handleServiceSelect(service)}
                         className="w-full py-3 rounded-full bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors"
                       >
-                        Book Service
+                        Get Quote
                       </button>
                     </div>
                   </div>
