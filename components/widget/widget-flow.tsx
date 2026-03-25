@@ -332,15 +332,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
   const getEfficiencyDescription = (productId: string, tier: string) =>
     data.systemConfigs?.find(c => c.product_id === productId && c.tier === tier)?.efficiency_description ?? null
 
-  const hasLocationStep = (productId: string) => {
-    const cfg = getProductConfig(productId)
-    if (!cfg) return false
-    return [cfg.attic_additional_cost, cfg.basement_additional_cost,
-            cfg.closet_additional_cost, cfg.garage_additional_cost,
-            cfg.crawl_space_additional_cost].some(c => c > 0)
-  }
-
-  const getLocationCost = (productId: string, location: string): number => {
+const getLocationCost = (productId: string, location: string): number => {
     const cfg = getProductConfig(productId)
     if (!cfg || !location) return 0
     const map: Record<string, number> = {
@@ -412,7 +404,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
     if (selectedProduct) {
       const isService = selectedProduct.category === 'service'
       if (selectedProduct.capacity_options?.length) steps.push('capacity')
-      if (hasLocationStep(selectedProduct.id)) steps.push('location')
+      if (!isService) steps.push('location')
       if (!isService) steps.push('qty')
     }
     steps.push('contact', 'confirmation')
@@ -460,7 +452,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
         const steps: Step[] = ['system_type', 'heat_source']
         const isService = product.category === 'service'
         if (product.capacity_options?.length) steps.push('capacity')
-        if (hasLocationStep(product.id)) steps.push('location')
+        if (!isService) steps.push('location')
         if (!isService) steps.push('qty')
         steps.push('contact', 'confirmation')
         advanceFrom('heat_source', steps)
@@ -485,7 +477,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
     }
     const isService = product.category === 'service'
     if (product.capacity_options?.length) steps.push('capacity')
-    if (hasLocationStep(product.id)) steps.push('location')
+    if (!isService) steps.push('location')
     if (!isService) steps.push('qty')
     steps.push('contact', 'confirmation')
     advanceFrom('system_config', steps)
@@ -962,20 +954,24 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
                       closet: cfg?.closet_additional_cost ?? 0, basement: cfg?.basement_additional_cost ?? 0,
                       crawl_space: cfg?.crawl_space_additional_cost ?? 0,
                     }
-                    return LOCATION_OPTIONS
-                      .filter(l => (costMap[l.key] ?? 0) > 0)
-                      .map(loc => (
-                        <SelectCard
-                          key={loc.key}
-                          selected={selectedLocation === loc.key}
-                          onClick={() => { setSelectedLocation(loc.key); advanceFrom('location') }}
-                        >
-                          <IconBox Icon={loc.Icon} />
-                          <p className="font-semibold text-[#1a1a3e] text-sm">{loc.label}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{loc.description}</p>
-                          <RadioDot selected={selectedLocation === loc.key} />
-                        </SelectCard>
-                      ))
+                    return LOCATION_OPTIONS.map(loc => {
+                        const cost = costMap[loc.key] ?? 0
+                        return (
+                          <SelectCard
+                            key={loc.key}
+                            selected={selectedLocation === loc.key}
+                            onClick={() => { setSelectedLocation(loc.key); advanceFrom('location') }}
+                          >
+                            <IconBox Icon={loc.Icon} />
+                            <p className="font-semibold text-[#1a1a3e] text-sm">{loc.label}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{loc.description}</p>
+                            {cost > 0 && (
+                              <p className="text-xs text-indigo-600 font-medium mt-1">+${cost.toLocaleString()}</p>
+                            )}
+                            <RadioDot selected={selectedLocation === loc.key} />
+                          </SelectCard>
+                        )
+                      })
                   })()}
                 </div>
               </>
