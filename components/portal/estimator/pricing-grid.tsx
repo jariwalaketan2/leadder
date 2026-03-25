@@ -84,9 +84,14 @@ export function PricingGridComponent({
   }
 
   const handlePriceChange = (capacityId: string, tier: 'good' | 'better' | 'best', price: number | null) => {
+    const savedPrice = localTiers.find(t => t.capacity_option_id === capacityId && t.tier === tier)?.price ?? null
     setPendingChanges(prev => {
       const next = new Map(prev)
-      next.set(makeKey(capacityId, tier), price)
+      if (price === savedPrice) {
+        next.delete(makeKey(capacityId, tier))
+      } else {
+        next.set(makeKey(capacityId, tier), price)
+      }
       return next
     })
   }

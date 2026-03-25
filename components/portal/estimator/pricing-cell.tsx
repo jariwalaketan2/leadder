@@ -54,7 +54,9 @@ export function PricingCell({
 
   const handleApply = () => {
     const validatedPrice = validatePrice(value)
-    onChange(capacityId, tier, validatedPrice)
+    if (validatedPrice !== price) {
+      onChange(capacityId, tier, validatedPrice)
+    }
     setIsEditing(false)
   }
 
