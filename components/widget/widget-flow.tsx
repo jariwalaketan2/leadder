@@ -958,7 +958,6 @@ const getLocationCost = (productId: string, location: string): number => {
                       crawl_space: cfg?.crawl_space_additional_cost ?? 0,
                     }
                     return LOCATION_OPTIONS.map(loc => {
-                        const cost = costMap[loc.key] ?? 0
                         return (
                           <SelectCard
                             key={loc.key}
@@ -968,9 +967,6 @@ const getLocationCost = (productId: string, location: string): number => {
                             <IconBox Icon={loc.Icon} />
                             <p className="font-semibold text-[#1a1a3e] text-sm">{loc.label}</p>
                             <p className="text-xs text-gray-400 mt-0.5">{loc.description}</p>
-                            {cost > 0 && (
-                              <p className="text-xs text-indigo-600 font-medium mt-1">+${cost.toLocaleString()}</p>
-                            )}
                             <RadioDot selected={selectedLocation === loc.key} />
                           </SelectCard>
                         )
