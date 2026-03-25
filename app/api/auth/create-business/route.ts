@@ -38,59 +38,46 @@ export async function POST(request: Request) {
 
     const slug = generateSlug(businessName)
 
-    // Retry logic: Sometimes the user isn't fully committed to auth.users yet
-    let lastError = null
-    for (let attempt = 0; attempt < 3; attempt++) {
-      if (attempt > 0) {
-        // Wait before retrying (exponential backoff: 500ms, 1000ms)
-        await sleep(500 * attempt)
-      }
-
-      // Use PostgreSQL function to bypass RLS
-      const { data, error } = await supabaseAdmin
-        .rpc('create_business_with_settings', {
-          p_owner_id: userId,
-          p_name: businessName,
-          p_slug: slug,
-          p_email: email,
-        })
-
-      if (!error) {
-        const businessInfo = data[0]
-        return NextResponse.json({
-          success: true,
-          business: {
-            id: businessInfo.business_id,
-            name: businessInfo.business_name,
-            slug: businessInfo.business_slug,
-          }
-        })
-      }
-
-      lastError = error
-
-      // Check for unique constraint violation (user already has a business)
-      if (error.code === '23505' && error.message?.includes('businesses_owner_id_unique')) {
-        return NextResponse.json(
-          { error: 'User already has a business' },
-          { status: 409 } // Conflict
-        )
-      }
-
-      // If it's not a foreign key error, don't retry
-      if (error.code !== '23503') {
-        break
-      }
-
-      console.log(`Attempt ${attempt + 1} failed, retrying...`, error.message)
+    // Wait for user to be fully committed to auth.users (Supabase replication lag)
+    // Poll the admin API instead of blindly retrying the insert
+    const delays = [500, 1000, 2000, 3000]
+    let userConfirmed = false
+    for (const delay of delays) {
+      await sleep(delay)
+      const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId)
+      if (userData?.user?.id) { userConfirmed = true; break }
     }
 
-    // All retries failed
-    console.error('Error creating business after retries:', lastError)
-    return NextResponse.json(
-      { error: 'Failed to create business' },
-      { status: 500 }
-    )
+    if (!userConfirmed) {
+      console.error('User not found in auth.users after waiting:', userId)
+      return NextResponse.json({ error: 'Account setup timed out. Please try signing in.' }, { status: 500 })
+    }
+
+    const { data, error } = await supabaseAdmin
+      .rpc('create_business_with_settings', {
+        p_owner_id: userId,
+        p_name: businessName,
+        p_slug: slug,
+        p_email: email,
+      })
+
+    if (error) {
+      if (error.code === '23505' && error.message?.includes('businesses_owner_id_unique')) {
+        return NextResponse.json({ error: 'User already has a business' }, { status: 409 })
+      }
+      console.error('Error creating business:', error)
+      return NextResponse.json({ error: 'Failed to create business' }, { status: 500 })
+    }
+
+    const businessInfo = data[0]
+    return NextResponse.json({
+      success: true,
+      business: {
+        id: businessInfo.business_id,
+        name: businessInfo.business_name,
+        slug: businessInfo.business_slug,
+      }
+    })
   } catch (error) {
     console.error('Error in create-business:', error)
     return NextResponse.json(
