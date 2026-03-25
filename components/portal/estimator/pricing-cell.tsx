@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { Pencil } from 'lucide-react'
 
 interface PricingCellProps {
   price: number | null
@@ -98,20 +99,25 @@ export function PricingCell({
     <button
       onClick={handleClick}
       disabled={disabled}
-      className={`w-full px-2 py-2 text-center rounded transition-colors border ${
+      className={`group relative w-full px-2 py-2 text-center rounded transition-all border ${
         disabled
           ? 'cursor-not-allowed border-transparent'
           : price !== null
-            ? 'border-transparent hover:border-border hover:bg-muted/50 cursor-pointer'
-            : 'border-dashed border-border hover:border-primary hover:bg-muted/50 cursor-pointer'
+            ? 'border-transparent hover:border-primary/40 hover:bg-primary/5 cursor-pointer'
+            : 'border-dashed border-border hover:border-primary hover:bg-primary/5 cursor-pointer'
       }`}
     >
       {price !== null ? (
-        <span className="text-lg font-semibold text-foreground">
-          ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-        </span>
+        <>
+          <span className="text-lg font-semibold text-foreground">
+            ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </span>
+          {!disabled && (
+            <Pencil className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          )}
+        </>
       ) : (
-        <span className="text-xs font-medium text-muted-foreground">
+        <span className="text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors">
           + Set price
         </span>
       )}
