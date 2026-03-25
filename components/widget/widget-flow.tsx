@@ -654,7 +654,6 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
                 const descLines = tier
                   ? (tier.features?.length > 0 ? tier.features : (tier.scope_of_work ?? '').split('\n').map(l => l.trim()).filter(Boolean))
                   : []
-                const price = tier ? formatServicePrice(service.id) : null
                 return (
                   <div key={service.id} className="bg-white rounded-2xl border-2 border-gray-200 overflow-hidden flex flex-col">
                     <div className="p-6 flex-1">
@@ -664,9 +663,6 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
                       <h3 className="font-bold text-[#1a1a3e] text-lg mb-1">{service.name}</h3>
                       {service.description && (
                         <p className="text-sm text-gray-500 mb-4 leading-relaxed">{service.description}</p>
-                      )}
-                      {price && (
-                        <p className="text-3xl font-bold text-indigo-600 mb-1">{price}</p>
                       )}
                       {tier?.warranty_years && (
                         <p className="text-xs text-gray-400 mb-4">{tier.warranty_years}-yr warranty</p>
