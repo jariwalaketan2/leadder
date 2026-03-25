@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Mail, Phone, Users, Search, Trash2 } from 'lucide-react'
+import { Mail, Phone, MapPin, Users, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -195,6 +195,12 @@ export function LeadsTable({ leads: initialLeads }: LeadsTableProps) {
                         <Phone className="w-3 h-3 flex-shrink-0" />
                         {lead.phone}
                       </a>
+                      {(lead.city || lead.address) && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <MapPin className="w-3 h-3 flex-shrink-0" />
+                          {[lead.address, lead.city, lead.state, lead.zip].filter(Boolean).join(', ')}
+                        </p>
+                      )}
                     </div>
                   </TableCell>
 

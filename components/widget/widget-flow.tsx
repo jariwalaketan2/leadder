@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { getSqftRange } from '@/lib/utils/hvac'
 import {
   Check, ArrowLeft, Loader2,
-  User, Mail, Phone, Search,
+  User, Mail, Phone, MapPin,
   Snowflake, Thermometer, Flame, Wind, Zap, Fan, Droplets, Wrench, Settings,
   Home, Building2, DoorOpen, ArrowDownToLine, MoveDown,
 } from 'lucide-react'
@@ -315,7 +315,10 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
   const [fullName, setFullName]   = useState('')
   const [email, setEmail]         = useState('')
   const [phone, setPhone]         = useState('')
-  const [cityZip, setCityZip]     = useState('')
+  const [address, setAddress]     = useState('')
+  const [city, setCity]           = useState('')
+  const [addrState, setAddrState] = useState('')
+  const [zip, setZip]             = useState('')
   const [consent, setConsent]     = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted]   = useState(false)
@@ -434,7 +437,8 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
     setIntroActive(true)
     setSystemType(null); setHeatSource(null); setSystemConfig(null)
     resetProductState()
-    setFullName(''); setEmail(''); setPhone(''); setCityZip('')
+    setFullName(''); setEmail(''); setPhone('')
+    setAddress(''); setCity(''); setAddrState(''); setZip('')
     setConsent(false); setSubmitting(false); setSubmitted(false)
     setStep('system_type')
   }
@@ -543,7 +547,8 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
           capacityOptionId: selectedCapacity?.id, pricingTierId,
           productName: selectedProduct?.name, capacityLabel: selectedCapacity?.label,
           tierSelected, quotedPrice, priceGood, priceBetter, priceBest,
-          firstName, lastName, email, phone, city: cityZip, address: null, state: null, zip: null,
+          firstName, lastName, email, phone,
+          address: address || null, city: city || null, state: addrState || null, zip: zip || null,
         }),
       })
       if (res.ok) { setSubmitted(true); setStep('confirmation') }
@@ -742,6 +747,9 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
                           <div>
                             <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">Estimated Price</p>
                             <p className={`text-xl font-bold ${ts.priceCls}`}>{formatPrice(tier.price)}</p>
+                            {tier.warranty_years && (
+                              <p className="text-xs text-gray-400 mt-0.5">{tier.warranty_years}-yr warranty</p>
+                            )}
                           </div>
                           {eff && (
                             <div className="bg-gray-50 rounded-xl p-3">
@@ -1001,23 +1009,28 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
                   <FormInput icon={User} required placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} />
                   <FormInput icon={Mail} required type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} />
                   <FormInput icon={Phone} required type="tel" placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} />
-                  <div className="relative">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <FormInput icon={MapPin} placeholder="Street Address" value={address} onChange={e => setAddress(e.target.value)} />
+                  <div className="grid grid-cols-3 gap-2">
                     <input
-                      placeholder="City or ZIP Code"
-                      value={cityZip}
-                      onChange={e => setCityZip(e.target.value)}
-                      className="w-full pl-10 pr-9 py-3 rounded-xl border border-gray-200 bg-white text-[#1a1a3e] placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      placeholder="City"
+                      value={city}
+                      onChange={e => setCity(e.target.value)}
+                      className="col-span-1 px-4 py-3 rounded-xl border border-gray-200 bg-white text-[#1a1a3e] placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
-                    {cityZip && (
-                      <button
-                        type="button"
-                        onClick={() => setCityZip('')}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 w-4 h-4 flex items-center justify-center rounded-full"
-                      >
-                        ✕
-                      </button>
-                    )}
+                    <input
+                      placeholder="State"
+                      value={addrState}
+                      onChange={e => setAddrState(e.target.value)}
+                      maxLength={2}
+                      className="col-span-1 px-4 py-3 rounded-xl border border-gray-200 bg-white text-[#1a1a3e] placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent uppercase"
+                    />
+                    <input
+                      placeholder="ZIP"
+                      value={zip}
+                      onChange={e => setZip(e.target.value)}
+                      maxLength={10}
+                      className="col-span-1 px-4 py-3 rounded-xl border border-gray-200 bg-white text-[#1a1a3e] placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
                   </div>
                   <label className="flex items-start gap-2.5 cursor-pointer pt-1">
                     <input

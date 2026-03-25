@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader2, Save, Zap } from 'lucide-react'
+import { Loader2, Save } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface SettingsFormProps {
@@ -19,7 +19,6 @@ interface SettingsFormProps {
 export function SettingsForm({ business, settings }: SettingsFormProps) {
   const supabase = createClient()
   const [saving, setSaving] = useState(false)
-  const [testingWebhook, setTestingWebhook] = useState(false)
 
   // Business fields
   const [name, setName] = useState(business.name)
@@ -36,24 +35,7 @@ export function SettingsForm({ business, settings }: SettingsFormProps) {
   // Integrations
   const [webhookUrl, setWebhookUrl] = useState(settings?.webhook_url || '')
 
-  const handleTestWebhook = async () => {
-    setTestingWebhook(true)
-    try {
-      const res = await fetch('/api/portal/test-webhook', { method: 'POST' })
-      const data = await res.json()
-      if (data.success) {
-        toast.success(`Webhook delivered! HTTP ${data.httpStatus}`)
-      } else {
-        toast.error(data.error || `Webhook failed — HTTP ${data.httpStatus}`)
-      }
-    } catch {
-      toast.error('Could not reach webhook URL')
-    } finally {
-      setTestingWebhook(false)
-    }
-  }
-
-  const handleSave = async () => {
+const handleSave = async () => {
     setSaving(true)
     try {
       const [businessRes, settingsRes] = await Promise.all([
@@ -217,29 +199,14 @@ export function SettingsForm({ business, settings }: SettingsFormProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="webhookUrl" className="text-foreground">Webhook URL</Label>
-            <div className="flex gap-2">
-              <Input
-                id="webhookUrl"
-                type="url"
-                placeholder="https://hook.make.com/xxxx  or  https://hooks.zapier.com/xxxx"
-                value={webhookUrl}
-                onChange={e => setWebhookUrl(e.target.value)}
-                className="bg-input border-border text-foreground font-mono text-sm"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={!webhookUrl || testingWebhook}
-                onClick={handleTestWebhook}
-                className="shrink-0"
-              >
-                {testingWebhook
-                  ? <Loader2 className="w-4 h-4 animate-spin" />
-                  : <><Zap className="w-4 h-4 mr-1" />Test</>
-                }
-              </Button>
-            </div>
+            <Input
+              id="webhookUrl"
+              type="url"
+              placeholder="https://hook.make.com/xxxx  or  https://hooks.zapier.com/xxxx"
+              value={webhookUrl}
+              onChange={e => setWebhookUrl(e.target.value)}
+              className="bg-input border-border text-foreground font-mono text-sm"
+            />
             <p className="text-xs text-muted-foreground">
               Leave blank to disable. We&apos;ll send a JSON POST with lead name, email,
               phone, address, product, tier, and quoted price.
