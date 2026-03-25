@@ -177,7 +177,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
   const [consent, setConsent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [expandedTiers, setExpandedTiers] = useState<Set<string>>(new Set())
+  const [scopeExpanded, setScopeExpanded] = useState(false)
 
   // ── Helpers ──
 
@@ -280,7 +280,7 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
     setSelectedLocation('')
     setUnitQty(1)
     setSelectedTier(null)
-    setExpandedTiers(new Set())
+    setScopeExpanded(false)
   }
 
   const handleStartEstimate = () => {
@@ -496,9 +496,10 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
                   {tiers.map(tier => {
                     const ts = CONF_TIER_STYLES[tier.tier] ?? CONF_TIER_STYLES.good
                     const eff = getEfficiencyDescription(selectedProduct.id, tier.tier)
-                    const scope = tier.scope_of_work?.trim() ?? ''
-                    const isExpanded = expandedTiers.has(tier.tier)
-                    const PREVIEW = 120
+                    const scopeLines = (tier.scope_of_work ?? '').split('\n').map(l => l.trim()).filter(Boolean)
+                    const PREVIEW_LINES = 3
+                    const visibleLines = scopeExpanded ? scopeLines : scopeLines.slice(0, PREVIEW_LINES)
+                    const hasMoreScope = scopeLines.length > PREVIEW_LINES
 
                     return (
                       <div key={tier.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col">
@@ -534,26 +535,25 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
                             </div>
                           )}
 
-                          {/* What's included */}
-                          {scope && (
+                          {/* What's included — bullet points */}
+                          {scopeLines.length > 0 && (
                             <div>
-                              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">What&apos;s Included</p>
-                              <p className="text-sm text-gray-600 leading-relaxed">
-                                {isExpanded || scope.length <= PREVIEW
-                                  ? scope
-                                  : scope.slice(0, PREVIEW) + '…'}
-                              </p>
-                              {scope.length > PREVIEW && (
+                              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">What&apos;s Included</p>
+                              <ul className="space-y-1.5">
+                                {visibleLines.map((line, i) => (
+                                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-gray-400 flex-shrink-0" />
+                                    {line}
+                                  </li>
+                                ))}
+                              </ul>
+                              {hasMoreScope && (
                                 <button
                                   type="button"
-                                  onClick={() => setExpandedTiers(prev => {
-                                    const next = new Set(prev)
-                                    isExpanded ? next.delete(tier.tier) : next.add(tier.tier)
-                                    return next
-                                  })}
-                                  className="text-xs text-indigo-600 hover:text-indigo-700 mt-1.5 font-medium"
+                                  onClick={() => setScopeExpanded(v => !v)}
+                                  className="text-xs text-indigo-600 hover:text-indigo-700 mt-2 font-medium"
                                 >
-                                  {isExpanded ? 'See Less' : 'See More'}
+                                  {scopeExpanded ? 'See Less' : `See More (${scopeLines.length - PREVIEW_LINES} more)`}
                                 </button>
                               )}
                             </div>
