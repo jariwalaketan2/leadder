@@ -61,7 +61,6 @@ export async function POST(request: Request) {
         price_good: priceGood || null,
         price_better: priceBetter || null,
         price_best: priceBest || null,
-        status: 'new',
       })
       .select()
       .single()
