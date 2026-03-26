@@ -62,7 +62,7 @@ export async function GET(
     // Fetch business settings
     const { data: settings } = await supabaseAdmin
       .from('business_settings')
-      .select('widget_enabled, widget_title, widget_subtitle, widget_thank_you_message, price_range_pct, redirect_url, redirect_button_text')
+      .select('widget_enabled, widget_title, widget_subtitle, widget_thank_you_message, price_range_pct, redirect_url, redirect_button_text, financing_enabled, financing_term_months, financing_apr, financing_link_text, financing_link_url')
       .eq('business_id', business.id)
       .single()
 
@@ -118,6 +118,11 @@ export async function GET(
         price_range_pct: settings?.price_range_pct || 10,
         redirect_url: settings?.redirect_url || null,
         redirect_button_text: settings?.redirect_button_text || null,
+        financing_enabled: settings?.financing_enabled ?? false,
+        financing_term_months: settings?.financing_term_months ?? 60,
+        financing_apr: settings?.financing_apr ?? 0,
+        financing_link_text: settings?.financing_link_text || null,
+        financing_link_url: settings?.financing_link_url || null,
       },
     })
   } catch (error) {

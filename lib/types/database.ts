@@ -91,6 +91,11 @@ export interface BusinessSettings {
   webhook_url: string | null
   redirect_url: string | null
   redirect_button_text: string | null
+  financing_enabled: boolean
+  financing_term_months: number
+  financing_apr: number
+  financing_link_text: string | null
+  financing_link_url: string | null
   created_at: string
   updated_at: string
 }

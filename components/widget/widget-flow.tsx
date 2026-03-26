@@ -70,6 +70,11 @@ interface WidgetData {
     price_range_pct?: number
     redirect_url: string | null
     redirect_button_text: string | null
+    financing_enabled: boolean
+    financing_term_months: number
+    financing_apr: number
+    financing_link_text: string | null
+    financing_link_url: string | null
   }
 }
 
@@ -297,6 +302,18 @@ function FormInput({ icon: Icon, ...props }: React.InputHTMLAttributes<HTMLInput
       />
     </div>
   )
+}
+
+// ─── Financing helpers ────────────────────────────────────────────────────────
+
+function calcMonthly(price: number, termMonths: number, apr: number): number {
+  if (apr <= 0) return price / termMonths
+  const r = apr / 100 / 12
+  return price * (r * Math.pow(1 + r, termMonths)) / (Math.pow(1 + r, termMonths) - 1)
+}
+
+function formatMonthly(amount: number): string {
+  return '$' + Math.ceil(amount).toLocaleString() + '/mo'
 }
 
 // ─── Phone Input with Country Code ───────────────────────────────────────────
@@ -873,6 +890,11 @@ const getLocationCost = (productId: string, location: string): number => {
                           <div>
                             <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">Estimated Price</p>
                             <p className={`text-xl font-bold ${ts.priceCls}`}>{formatPrice(tier.price)}</p>
+                            {data.settings.financing_enabled && tier.price > 0 && (
+                              <p className="text-xs text-indigo-500 font-medium mt-0.5">
+                                As low as {formatMonthly(calcMonthly(tier.price, data.settings.financing_term_months, data.settings.financing_apr))}
+                              </p>
+                            )}
                             {tier.warranty_years && (
                               <p className="text-xs text-gray-400 mt-0.5">{tier.warranty_years}-yr warranty</p>
                             )}
@@ -949,6 +971,20 @@ const getLocationCost = (productId: string, location: string): number => {
                   </div>
                 )
               })()}
+              {/* Financing button */}
+              {data.settings.financing_enabled && data.settings.financing_link_url && data.settings.financing_link_text && (
+                <div className="text-center pt-4">
+                  <p className="text-xs text-gray-400 mb-2">Flexible financing available</p>
+                  <button
+                    type="button"
+                    onClick={() => window.open(data.settings.financing_link_url!, '_blank')}
+                    className="px-6 py-2.5 rounded-full border-2 border-indigo-600 text-indigo-600 font-semibold text-sm hover:bg-indigo-50 transition-colors"
+                  >
+                    {data.settings.financing_link_text}
+                  </button>
+                </div>
+              )}
+
               {/* CTA button — only shown if both redirect_url and redirect_button_text are set */}
               {data.settings.redirect_url && data.settings.redirect_button_text && (
                 <div className="text-center pt-6">

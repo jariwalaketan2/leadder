@@ -62,6 +62,11 @@ interface WidgetData {
     price_range_pct?: number
     redirect_url: string | null
     redirect_button_text: string | null
+    financing_enabled: boolean
+    financing_term_months: number
+    financing_apr: number
+    financing_link_text: string | null
+    financing_link_url: string | null
   }
 }
 
