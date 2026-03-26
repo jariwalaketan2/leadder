@@ -273,7 +273,7 @@ function SelectCard({ selected, onClick, children }: {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-2xl border-2 bg-white p-5 text-center transition-all hover:border-indigo-400 ${
+      className={`rounded-2xl border-2 bg-white p-5 text-center transition-all hover:border-indigo-400 ${
         selected ? 'border-indigo-600 shadow-sm' : 'border-gray-200'
       }`}
     >
