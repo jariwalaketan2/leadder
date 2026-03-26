@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getSqftRange } from '@/lib/utils/hvac'
 import {
   Check, ArrowLeft, Loader2,
@@ -295,6 +295,120 @@ function FormInput({ icon: Icon, ...props }: React.InputHTMLAttributes<HTMLInput
         {...props}
         className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-[#1a1a3e] placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
       />
+    </div>
+  )
+}
+
+// ─── Phone Input with Country Code ───────────────────────────────────────────
+
+const COUNTRIES = [
+  { code: 'US', dial: '+1',   flag: '🇺🇸', name: 'United States' },
+  { code: 'CA', dial: '+1',   flag: '🇨🇦', name: 'Canada' },
+  { code: 'GB', dial: '+44',  flag: '🇬🇧', name: 'United Kingdom' },
+  { code: 'AU', dial: '+61',  flag: '🇦🇺', name: 'Australia' },
+  { code: 'IN', dial: '+91',  flag: '🇮🇳', name: 'India' },
+  { code: 'MX', dial: '+52',  flag: '🇲🇽', name: 'Mexico' },
+  { code: 'DE', dial: '+49',  flag: '🇩🇪', name: 'Germany' },
+  { code: 'FR', dial: '+33',  flag: '🇫🇷', name: 'France' },
+  { code: 'IT', dial: '+39',  flag: '🇮🇹', name: 'Italy' },
+  { code: 'ES', dial: '+34',  flag: '🇪🇸', name: 'Spain' },
+  { code: 'BR', dial: '+55',  flag: '🇧🇷', name: 'Brazil' },
+  { code: 'AR', dial: '+54',  flag: '🇦🇷', name: 'Argentina' },
+  { code: 'NZ', dial: '+64',  flag: '🇳🇿', name: 'New Zealand' },
+  { code: 'ZA', dial: '+27',  flag: '🇿🇦', name: 'South Africa' },
+  { code: 'AE', dial: '+971', flag: '🇦🇪', name: 'UAE' },
+  { code: 'SA', dial: '+966', flag: '🇸🇦', name: 'Saudi Arabia' },
+  { code: 'PK', dial: '+92',  flag: '🇵🇰', name: 'Pakistan' },
+  { code: 'NG', dial: '+234', flag: '🇳🇬', name: 'Nigeria' },
+  { code: 'PH', dial: '+63',  flag: '🇵🇭', name: 'Philippines' },
+  { code: 'SG', dial: '+65',  flag: '🇸🇬', name: 'Singapore' },
+]
+
+function PhoneInput({ value, onChange }: { value: string; onChange: (full: string) => void }) {
+  const [selected, setSelected] = useState(COUNTRIES[0])
+  const [number, setNumber] = useState('')
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  function selectCountry(c: typeof COUNTRIES[0]) {
+    setSelected(c)
+    setOpen(false)
+    setSearch('')
+    onChange(`${c.dial}${number}`)
+  }
+
+  function handleNumber(e: React.ChangeEvent<HTMLInputElement>) {
+    const n = e.target.value
+    setNumber(n)
+    onChange(`${selected.dial}${n}`)
+  }
+
+  const filtered = search
+    ? COUNTRIES.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.dial.includes(search))
+    : COUNTRIES
+
+  return (
+    <div className="relative flex rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent" ref={ref}>
+      {/* Country picker trigger */}
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 pl-3 pr-2 py-3 text-sm text-[#1a1a3e] shrink-0 border-r border-gray-200 hover:bg-gray-50 rounded-l-xl transition-colors"
+      >
+        <span className="text-base leading-none">{selected.flag}</span>
+        <span className="font-medium text-xs text-gray-500">{selected.dial}</span>
+        <svg className="w-3 h-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+      </button>
+
+      {/* Number input */}
+      <input
+        type="tel"
+        required
+        placeholder="Phone number"
+        value={number}
+        onChange={handleNumber}
+        className="flex-1 pl-3 pr-4 py-3 text-sm text-[#1a1a3e] placeholder-gray-400 bg-transparent focus:outline-none rounded-r-xl"
+      />
+
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-50 w-64 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+          <div className="p-2 border-b border-gray-100">
+            <input
+              autoFocus
+              type="text"
+              placeholder="Search country..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            />
+          </div>
+          <ul className="max-h-48 overflow-y-auto">
+            {filtered.map(c => (
+              <li key={c.code}>
+                <button
+                  type="button"
+                  onClick={() => selectCountry(c)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-indigo-50 text-left transition-colors ${selected.code === c.code ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-[#1a1a3e]'}`}
+                >
+                  <span className="text-base">{c.flag}</span>
+                  <span className="flex-1 truncate">{c.name}</span>
+                  <span className="text-gray-400 text-xs shrink-0">{c.dial}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }
@@ -1032,7 +1146,7 @@ const getLocationCost = (productId: string, location: string): number => {
                 <form onSubmit={handleSubmit} className="max-w-lg mx-auto space-y-3">
                   <FormInput icon={User} required placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} />
                   <FormInput icon={Mail} required type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} />
-                  <FormInput icon={Phone} required type="tel" placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} />
+                  <PhoneInput value={phone} onChange={setPhone} />
                   <FormInput icon={MapPin} placeholder="Street Address" value={address} onChange={e => setAddress(e.target.value)} />
                   <div className="grid grid-cols-3 gap-2">
                     <input
