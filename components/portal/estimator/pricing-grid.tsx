@@ -173,7 +173,7 @@ export function PricingGridComponent({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Top bar */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <Button variant="ghost" onClick={() => router.push('/portal/estimator')}>

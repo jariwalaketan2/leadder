@@ -189,17 +189,17 @@ export function ProductGrid({ products, existingTiers, productConfigs, businessI
   return (
     <>
       {/* Equipment Section */}
-      <div className="space-y-4">
+      <div className="space-y-5">
         <h3 className="text-lg font-semibold text-foreground">Equipment</h3>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {equipment.map((product) => renderProductCard(product, false))}
         </div>
       </div>
 
       {/* Services Section */}
-      <div className="space-y-4 mt-8">
+      <div className="space-y-5 mt-10">
         <h3 className="text-lg font-semibold text-foreground">Services</h3>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {services.map((product) => renderProductCard(product, true))}
         </div>
       </div>

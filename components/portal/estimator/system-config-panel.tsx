@@ -266,7 +266,7 @@ export function SystemConfigPanel({
           </TabsList>
 
           {TIER_ORDER.map(tier => (
-            <TabsContent key={tier} value={tier} className="space-y-6 pt-2">
+            <TabsContent key={tier} value={tier} className="space-y-8 pt-4">
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Efficiency Description</Label>
@@ -303,33 +303,37 @@ export function SystemConfigPanel({
               <div className="space-y-3">
                 <Label>{tier.charAt(0).toUpperCase() + tier.slice(1)} Tier Image</Label>
                 {configs[tier].image_url ? (
-                  <div className="flex flex-col items-center gap-4 p-6 rounded-lg border border-border bg-muted/30">
-                    <img
-                      src={configs[tier].image_url}
-                      alt={`${tier} tier`}
-                      className="w-40 h-32 object-contain"
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => fileInputRefs.current[tier]?.click()}
-                        disabled={uploadingTier === tier}
-                      >
-                        {uploadingTier === tier ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
-                        Replace
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => removeImage(tier)}
-                      >
-                        <X className="w-4 h-4 mr-1.5" />
-                        Remove
-                      </Button>
+                  <div className="space-y-3">
+                    <div className="rounded-lg border border-border bg-muted/30 overflow-hidden">
+                      <img
+                        src={configs[tier].image_url}
+                        alt={`${tier} tier`}
+                        className="w-full h-64 object-contain p-4"
+                      />
                     </div>
-                    <p className="text-xs text-muted-foreground">Shown on the quote results screen</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground">Shown on the quote results screen</p>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => fileInputRefs.current[tier]?.click()}
+                          disabled={uploadingTier === tier}
+                        >
+                          {uploadingTier === tier ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
+                          Replace
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => removeImage(tier)}
+                        >
+                          <X className="w-4 h-4 mr-1.5" />
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div

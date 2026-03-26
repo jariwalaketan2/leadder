@@ -26,7 +26,7 @@ export default async function WidgetPage() {
   const iframeCode = `<iframe src="${widgetUrl}" width="100%" height="700" frameborder="0" style="border: none; max-width: 100%;"></iframe>`
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h2 className="text-2xl font-bold text-foreground">Widget Embed</h2>
         <p className="text-muted-foreground mt-1">

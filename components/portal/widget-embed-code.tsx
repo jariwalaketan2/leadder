@@ -61,7 +61,7 @@ export function WidgetEmbedCode({ widgetUrl, iframeCode, businessSlug }: WidgetE
 </div>`
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-8 max-w-2xl">
       <Tabs defaultValue="iframe" className="w-full">
         <TabsList className="grid w-full grid-cols-3 bg-muted">
           <TabsTrigger value="iframe" className="data-[state=active]:bg-background">

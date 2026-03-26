@@ -44,7 +44,7 @@ export default async function EstimatorPage() {
     .eq('business_id', business.id)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h2 className="text-2xl font-bold text-foreground">Instant Estimator</h2>
         <p className="text-muted-foreground mt-1">
