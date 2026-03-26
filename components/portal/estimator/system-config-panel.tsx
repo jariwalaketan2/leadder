@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Loader2, CopyCheck } from 'lucide-react'
+import { Loader2, CopyCheck, Upload, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { TierSystemConfiguration, CapacityOption, PricingTier } from '@/lib/types/database'
@@ -48,26 +48,33 @@ export function SystemConfigPanel({
   onTiersUpdate,
 }: SystemConfigPanelProps) {
 
+  const fileInputRefs = useRef<Record<TierType, HTMLInputElement | null>>({ good: null, better: null, best: null })
+  const [uploadingTier, setUploadingTier] = useState<TierType | null>(null)
+
   // Local editable state per tier
   const [configs, setConfigs] = useState<Record<TierType, {
     efficiency_description: string
     warranty_years: string
     scope_of_work: string
+    image_url: string
   }>>({
     good: {
       efficiency_description: getConfig(systemConfig, 'good').efficiency_description ?? '',
       warranty_years: getConfig(systemConfig, 'good').warranty_years?.toString() ?? '',
       scope_of_work: getConfig(systemConfig, 'good').scope_of_work ?? '',
+      image_url: getConfig(systemConfig, 'good').image_url ?? '',
     },
     better: {
       efficiency_description: getConfig(systemConfig, 'better').efficiency_description ?? '',
       warranty_years: getConfig(systemConfig, 'better').warranty_years?.toString() ?? '',
       scope_of_work: getConfig(systemConfig, 'better').scope_of_work ?? '',
+      image_url: getConfig(systemConfig, 'better').image_url ?? '',
     },
     best: {
       efficiency_description: getConfig(systemConfig, 'best').efficiency_description ?? '',
       warranty_years: getConfig(systemConfig, 'best').warranty_years?.toString() ?? '',
       scope_of_work: getConfig(systemConfig, 'best').scope_of_work ?? '',
+      image_url: getConfig(systemConfig, 'best').image_url ?? '',
     },
   })
 
@@ -81,6 +88,30 @@ export function SystemConfigPanel({
     }))
   }
 
+  async function handleImageUpload(tier: TierType, file: File) {
+    setUploadingTier(tier)
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `${businessId}/${productId}/${tier}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('tier-images')
+        .upload(path, file, { upsert: true })
+      if (uploadError) throw uploadError
+      const { data: { publicUrl } } = supabase.storage.from('tier-images').getPublicUrl(path)
+      updateField(tier, 'image_url', publicUrl)
+      toast.success(`${tier.charAt(0).toUpperCase() + tier.slice(1)} tier image uploaded`)
+    } catch (err) {
+      console.error('Image upload error:', err)
+      toast.error('Failed to upload image')
+    } finally {
+      setUploadingTier(null)
+    }
+  }
+
+  async function removeImage(tier: TierType) {
+    updateField(tier, 'image_url', '')
+  }
+
   async function saveTierConfig(tier: TierType) {
     setSavingTier(tier)
     try {
@@ -92,6 +123,7 @@ export function SystemConfigPanel({
         efficiency_description: cfg.efficiency_description || null,
         warranty_years: cfg.warranty_years ? parseInt(cfg.warranty_years) : null,
         scope_of_work: cfg.scope_of_work || null,
+        image_url: cfg.image_url || null,
         updated_at: new Date().toISOString(),
       }
 
@@ -265,6 +297,64 @@ export function SystemConfigPanel({
                   value={configs[tier].scope_of_work}
                   onChange={e => updateField(tier, 'scope_of_work', e.target.value)}
                 />
+              </div>
+
+              {/* Tier Image */}
+              <div className="space-y-2">
+                <Label>{tier.charAt(0).toUpperCase() + tier.slice(1)} Tier Image</Label>
+                {configs[tier].image_url ? (
+                  <div className="flex items-start gap-4">
+                    <img
+                      src={configs[tier].image_url}
+                      alt={`${tier} tier`}
+                      className="w-32 h-24 object-contain rounded-lg border border-border bg-muted"
+                    />
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => fileInputRefs.current[tier]?.click()}
+                        disabled={uploadingTier === tier}
+                      >
+                        {uploadingTier === tier ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                        Replace
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => removeImage(tier)}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => fileInputRefs.current[tier]?.click()}
+                    disabled={uploadingTier === tier}
+                  >
+                    {uploadingTier === tier ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                    Upload Image
+                  </Button>
+                )}
+                <input
+                  ref={el => { fileInputRefs.current[tier] = el }}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (file) handleImageUpload(tier, file)
+                    e.target.value = ''
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Upload an image representing this tier&apos;s system. Shown on the quote results screen.
+                </p>
               </div>
 
               <Button

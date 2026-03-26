@@ -62,7 +62,7 @@ export async function GET(
     // Fetch business settings
     const { data: settings } = await supabaseAdmin
       .from('business_settings')
-      .select('widget_enabled, widget_title, widget_subtitle, widget_thank_you_message, price_range_pct')
+      .select('widget_enabled, widget_title, widget_subtitle, widget_thank_you_message, price_range_pct, redirect_url, redirect_button_text')
       .eq('business_id', business.id)
       .single()
 
@@ -96,7 +96,7 @@ export async function GET(
     // Fetch tier system configurations (efficiency description per tier)
     const { data: systemConfigs } = await supabaseAdmin
       .from('tier_system_configurations')
-      .select('product_id, tier, efficiency_description')
+      .select('product_id, tier, efficiency_description, image_url')
       .eq('business_id', business.id)
 
     return NextResponse.json({
@@ -116,6 +116,8 @@ export async function GET(
         widget_subtitle: settings?.widget_subtitle || 'Select your HVAC service to see pricing',
         widget_thank_you_message: settings?.widget_thank_you_message || "Thank you! We'll be in touch soon.",
         price_range_pct: settings?.price_range_pct || 10,
+        redirect_url: settings?.redirect_url || null,
+        redirect_button_text: settings?.redirect_button_text || null,
       },
     })
   } catch (error) {

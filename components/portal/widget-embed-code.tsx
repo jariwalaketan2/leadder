@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Check, Copy, ExternalLink, Code } from 'lucide-react'
+import { Check, Copy, ExternalLink, Code, LayoutPanelTop } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface WidgetEmbedCodeProps {
@@ -13,16 +13,28 @@ interface WidgetEmbedCodeProps {
   businessSlug: string
 }
 
-export function WidgetEmbedCode({ widgetUrl, iframeCode, businessSlug }: WidgetEmbedCodeProps) {
-  const [copiedIframe, setCopiedIframe] = useState(false)
-  const [copiedLink, setCopiedLink] = useState(false)
-
-  const handleCopyIframe = async () => {
-    await navigator.clipboard.writeText(iframeCode)
-    setCopiedIframe(true)
-    toast.success('Iframe code copied to clipboard')
-    setTimeout(() => setCopiedIframe(false), 2000)
+function CopyBlock({ code, label }: { code: string; label: string }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(code)
+    setCopied(true)
+    toast.success(`${label} copied`)
+    setTimeout(() => setCopied(false), 2000)
   }
+  return (
+    <div className="relative">
+      <pre className="p-4 bg-muted rounded-lg text-sm text-foreground overflow-x-auto whitespace-pre-wrap break-all">
+        <code>{code}</code>
+      </pre>
+      <Button size="sm" variant="secondary" className="absolute top-2 right-2" onClick={handleCopy}>
+        {copied ? <><Check className="w-4 h-4 mr-1" />Copied</> : <><Copy className="w-4 h-4 mr-1" />Copy</>}
+      </Button>
+    </div>
+  )
+}
+
+export function WidgetEmbedCode({ widgetUrl, iframeCode, businessSlug }: WidgetEmbedCodeProps) {
+  const [copiedLink, setCopiedLink] = useState(false)
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(widgetUrl)
@@ -31,125 +43,139 @@ export function WidgetEmbedCode({ widgetUrl, iframeCode, businessSlug }: WidgetE
     setTimeout(() => setCopiedLink(false), 2000)
   }
 
+  const buttonCode = `<button onclick="document.getElementById('hvacq-modal').style.display='flex'" style="background:#4f46e5;color:#fff;padding:14px 28px;border:none;border-radius:50px;font-size:15px;font-weight:600;cursor:pointer;">
+  Get Your Instant Quote →
+</button>`
+
+  const modalCode = `<!-- Place this before </body> — only once per page -->
+<div id="hvacq-modal"
+  onclick="if(event.target.id==='hvacq-modal')this.style.display='none'"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:680px;max-height:90vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #e5e7eb;">
+      <strong style="font-size:15px;color:#111827;">Get Your Instant Quote</strong>
+      <button onclick="document.getElementById('hvacq-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:24px;color:#9ca3af;line-height:1;padding:0;">×</button>
+    </div>
+    <iframe src="${widgetUrl}" width="100%" height="580" frameborder="0" style="display:block;" loading="lazy"></iframe>
+  </div>
+</div>`
+
   return (
     <div className="space-y-6 max-w-2xl">
-      {/* Embed Options */}
-      <div className="space-y-6">
-        <Tabs defaultValue="iframe" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-muted">
-            <TabsTrigger value="iframe" className="data-[state=active]:bg-background">
-              Iframe Embed
-            </TabsTrigger>
-            <TabsTrigger value="link" className="data-[state=active]:bg-background">
-              Direct Link
-            </TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="iframe" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 bg-muted">
+          <TabsTrigger value="iframe" className="data-[state=active]:bg-background">
+            Iframe Embed
+          </TabsTrigger>
+          <TabsTrigger value="link" className="data-[state=active]:bg-background">
+            Direct Link
+          </TabsTrigger>
+          <TabsTrigger value="modal" className="data-[state=active]:bg-background">
+            <LayoutPanelTop className="w-3.5 h-3.5 mr-1.5" />
+            Popup Modal
+          </TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="iframe" className="mt-4">
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="text-base text-foreground">Iframe Code</CardTitle>
-                <CardDescription>
-                  Copy this code and paste it into your website HTML
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="relative">
-                  <pre className="p-4 bg-muted rounded-lg text-sm text-foreground overflow-x-auto">
-                    <code>{iframeCode}</code>
-                  </pre>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="absolute top-2 right-2"
-                    onClick={handleCopyIframe}
-                  >
-                    {copiedIframe ? (
-                      <>
-                        <Check className="w-4 h-4 mr-1" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4 mr-1" />
-                        Copy
-                      </>
-                    )}
-                  </Button>
-                </div>
+        {/* Iframe tab */}
+        <TabsContent value="iframe" className="mt-4">
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-base text-foreground">Iframe Code</CardTitle>
+              <CardDescription>Copy and paste into your website HTML</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <CopyBlock code={iframeCode} label="Iframe code" />
+              <div className="text-sm text-muted-foreground">
+                <p className="font-medium text-foreground mb-2">Instructions:</p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>Copy the iframe code above</li>
+                  <li>Paste it into your website&apos;s HTML</li>
+                  <li>Adjust the height if needed</li>
+                  <li>Save and publish your changes</li>
+                </ol>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                <div className="text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground mb-2">Instructions:</p>
-                  <ol className="list-decimal list-inside space-y-1">
-                    <li>Copy the iframe code above</li>
-                    <li>Paste it into your website&apos;s HTML</li>
-                    <li>Adjust the height if needed</li>
-                    <li>Save and publish your changes</li>
-                  </ol>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="link" className="mt-4">
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="text-base text-foreground">Direct Link</CardTitle>
-                <CardDescription>
-                  Share this link directly with customers or use in marketing
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="relative">
-                  <pre className="p-4 bg-muted rounded-lg text-sm text-foreground overflow-x-auto">
-                    <code>{widgetUrl}</code>
-                  </pre>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="absolute top-2 right-2"
-                    onClick={handleCopyLink}
-                  >
-                    {copiedLink ? (
-                      <>
-                        <Check className="w-4 h-4 mr-1" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4 mr-1" />
-                        Copy
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                <Button asChild className="w-full" variant="outline">
-                  <a href={widgetUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Open Widget Preview
-                  </a>
+        {/* Direct link tab */}
+        <TabsContent value="link" className="mt-4">
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-base text-foreground">Direct Link</CardTitle>
+              <CardDescription>Share directly with customers or use in marketing</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="relative">
+                <pre className="p-4 bg-muted rounded-lg text-sm text-foreground overflow-x-auto">
+                  <code>{widgetUrl}</code>
+                </pre>
+                <Button size="sm" variant="secondary" className="absolute top-2 right-2" onClick={handleCopyLink}>
+                  {copiedLink ? <><Check className="w-4 h-4 mr-1" />Copied</> : <><Copy className="w-4 h-4 mr-1" />Copy</>}
                 </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </div>
+              <Button asChild className="w-full" variant="outline">
+                <a href={widgetUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Open Widget Preview
+                </a>
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-base text-foreground flex items-center gap-2">
-              <Code className="w-5 h-5 text-primary" />
-              Your Widget ID
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <code className="px-3 py-2 bg-muted rounded text-primary font-mono">
-              {businessSlug}
-            </code>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Popup modal tab */}
+        <TabsContent value="modal" className="mt-4 space-y-4">
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-base text-foreground">Step 1 — Button Code</CardTitle>
+              <CardDescription>
+                Place this where you want the button to appear on your page
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CopyBlock code={buttonCode} label="Button code" />
+              <p className="text-xs text-muted-foreground mt-3">
+                You can change the button text and style to match your website.
+              </p>
+            </CardContent>
+          </Card>
 
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-base text-foreground">Step 2 — Modal Code</CardTitle>
+              <CardDescription>
+                Place this once, just before the <code className="bg-muted px-1 rounded">&lt;/body&gt;</code> tag
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CopyBlock code={modalCode} label="Modal code" />
+              <div className="text-sm text-muted-foreground mt-3">
+                <p className="font-medium text-foreground mb-1">How it works:</p>
+                <ul className="list-disc list-inside space-y-1 text-xs">
+                  <li>Button click opens the quote form in a centered overlay</li>
+                  <li>Click outside the modal or × to close</li>
+                  <li>Works on any website — no extra tools needed</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-base text-foreground flex items-center gap-2">
+            <Code className="w-5 h-5 text-primary" />
+            Your Widget ID
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <code className="px-3 py-2 bg-muted rounded text-primary font-mono">
+            {businessSlug}
+          </code>
+        </CardContent>
+      </Card>
     </div>
   )
 }

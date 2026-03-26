@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getSqftRange } from '@/lib/utils/hvac'
 import {
   Check, ArrowLeft, Loader2,
@@ -61,12 +61,15 @@ interface WidgetData {
     product_id: string
     tier: string
     efficiency_description: string | null
+    image_url: string | null
   }>
   settings: {
     widget_title: string
     widget_subtitle: string
     widget_thank_you_message: string
     price_range_pct?: number
+    redirect_url: string | null
+    redirect_button_text: string | null
   }
 }
 
@@ -333,6 +336,9 @@ export function WidgetFlow({ data }: { data: WidgetData }) {
 
   const getEfficiencyDescription = (productId: string, tier: string) =>
     data.systemConfigs?.find(c => c.product_id === productId && c.tier === tier)?.efficiency_description ?? null
+
+  const getTierImage = (productId: string, tier: string) =>
+    data.systemConfigs?.find(c => c.product_id === productId && c.tier === tier)?.image_url ?? null
 
 const getLocationCost = (productId: string, location: string): number => {
     const cfg = getProductConfig(productId)
@@ -723,12 +729,18 @@ const getLocationCost = (productId: string, location: string): number => {
                   {tiers.map(tier => {
                     const ts = CONF_TIER_STYLES[tier.tier] ?? CONF_TIER_STYLES.good
                     const eff = selectedProduct ? getEfficiencyDescription(selectedProduct.id, tier.tier) : null
+                    const tierImg = selectedProduct ? getTierImage(selectedProduct.id, tier.tier) : null
                     const scopeLines = (tier.scope_of_work ?? '').split('\n').map(l => l.trim()).filter(Boolean)
                     const PREVIEW_LINES = 3
                     const visibleLines = scopeExpanded ? scopeLines : scopeLines.slice(0, PREVIEW_LINES)
                     const hasMoreScope = scopeLines.length > PREVIEW_LINES
                     return (
                       <div key={tier.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col">
+                        {tierImg && (
+                          <div className="h-36 bg-gray-50 flex items-center justify-center overflow-hidden">
+                            <img src={tierImg} alt={`${tier.tier} tier`} className="h-full w-full object-contain p-3" />
+                          </div>
+                        )}
                         <div className={`px-5 pt-4 pb-3 border-b ${ts.headerBg}`}>
                           <div className="flex items-center justify-between mb-2">
                             <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${ts.badge}`}>
@@ -823,6 +835,18 @@ const getLocationCost = (productId: string, location: string): number => {
                   </div>
                 )
               })()}
+              {/* CTA button — only shown if both redirect_url and redirect_button_text are set */}
+              {data.settings.redirect_url && data.settings.redirect_button_text && (
+                <div className="text-center pt-6">
+                  <button
+                    type="button"
+                    onClick={() => window.open(data.settings.redirect_url!, '_blank')}
+                    className="px-8 py-3 rounded-full bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors shadow-sm"
+                  >
+                    {data.settings.redirect_button_text}
+                  </button>
+                </div>
+              )}
             </div>
           )
         })()}

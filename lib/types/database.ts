@@ -89,6 +89,8 @@ export interface BusinessSettings {
   widget_thank_you_message: string
   price_range_pct: number
   webhook_url: string | null
+  redirect_url: string | null
+  redirect_button_text: string | null
   created_at: string
   updated_at: string
 }
@@ -117,6 +119,7 @@ export interface TierSystemConfiguration {
   efficiency_description: string | null
   warranty_years: number | null
   scope_of_work: string | null
+  image_url: string | null
   created_at: string
   updated_at: string
 }

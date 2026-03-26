@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader2, Save } from 'lucide-react'
+import { Loader2, Save, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface SettingsFormProps {
@@ -32,6 +32,10 @@ export function SettingsForm({ business, settings }: SettingsFormProps) {
   const [widgetThankYou, setWidgetThankYou] = useState(settings?.widget_thank_you_message || "Thank you! We'll be in touch soon.")
   const [widgetEnabled, setWidgetEnabled] = useState(settings?.widget_enabled ?? true)
 
+  // Post-submission redirect
+  const [redirectUrl, setRedirectUrl] = useState(settings?.redirect_url || '')
+  const [redirectButtonText, setRedirectButtonText] = useState(settings?.redirect_button_text || '')
+
   // Integrations
   const [webhookUrl, setWebhookUrl] = useState(settings?.webhook_url || '')
 
@@ -51,6 +55,8 @@ const handleSave = async () => {
             widget_subtitle: widgetSubtitle,
             widget_thank_you_message: widgetThankYou,
             widget_enabled: widgetEnabled,
+            redirect_url: redirectUrl || null,
+            redirect_button_text: redirectButtonText || null,
             webhook_url: webhookUrl || null,
           })
           .eq('business_id', business.id),
@@ -175,6 +181,43 @@ const handleSave = async () => {
               onChange={e => setWidgetThankYou(e.target.value)}
               className="bg-input border-border text-foreground resize-none"
             />
+          </div>
+
+          {/* Post-submission redirect */}
+          <div className="pt-2 border-t border-border space-y-4">
+            <div>
+              <p className="text-sm font-medium text-foreground">Post-Submission Button</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Optional button shown on the quote results screen that links to any URL you choose.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="redirectButtonText" className="text-foreground">Button Text</Label>
+              <Input
+                id="redirectButtonText"
+                placeholder="e.g. Check Out Our Services"
+                value={redirectButtonText}
+                onChange={e => setRedirectButtonText(e.target.value)}
+                className="bg-input border-border text-foreground"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="redirectUrl" className="text-foreground flex items-center gap-1.5">
+                <ExternalLink className="w-3.5 h-3.5" />
+                Redirect URL
+              </Label>
+              <Input
+                id="redirectUrl"
+                type="url"
+                placeholder="https://yourbooking.com/schedule"
+                value={redirectUrl}
+                onChange={e => setRedirectUrl(e.target.value)}
+                className="bg-input border-border text-foreground"
+              />
+              <p className="text-xs text-muted-foreground">
+                Leave blank to hide the button. Opens in a new tab — homeowner can still see their quote.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

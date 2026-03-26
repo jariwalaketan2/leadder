@@ -53,12 +53,15 @@ interface WidgetData {
     product_id: string
     tier: string
     efficiency_description: string | null
+    image_url: string | null
   }>
   settings: {
     widget_title: string
     widget_subtitle: string
     widget_thank_you_message: string
     price_range_pct?: number
+    redirect_url: string | null
+    redirect_button_text: string | null
   }
 }
 
