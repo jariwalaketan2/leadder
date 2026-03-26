@@ -354,7 +354,7 @@ export function SystemConfigPanel({
                 <input
                   ref={el => { fileInputRefs.current[tier] = el }}
                   type="file"
-                  accept="image/*"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
                   className="hidden"
                   onChange={e => {
                     const file = e.target.files?.[0]
