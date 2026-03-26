@@ -266,8 +266,8 @@ export function SystemConfigPanel({
           </TabsList>
 
           {TIER_ORDER.map(tier => (
-            <TabsContent key={tier} value={tier} className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
+            <TabsContent key={tier} value={tier} className="space-y-6 pt-2">
+              <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Efficiency Description</Label>
                   <Input
@@ -300,23 +300,23 @@ export function SystemConfigPanel({
               </div>
 
               {/* Tier Image */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label>{tier.charAt(0).toUpperCase() + tier.slice(1)} Tier Image</Label>
                 {configs[tier].image_url ? (
-                  <div className="flex items-start gap-4">
+                  <div className="flex flex-col items-center gap-4 p-6 rounded-lg border border-border bg-muted/30">
                     <img
                       src={configs[tier].image_url}
                       alt={`${tier} tier`}
-                      className="w-32 h-24 object-contain rounded-lg border border-border bg-muted"
+                      className="w-40 h-32 object-contain"
                     />
-                    <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => fileInputRefs.current[tier]?.click()}
                         disabled={uploadingTier === tier}
                       >
-                        {uploadingTier === tier ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                        {uploadingTier === tier ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
                         Replace
                       </Button>
                       <Button
@@ -325,21 +325,27 @@ export function SystemConfigPanel({
                         className="text-destructive hover:text-destructive"
                         onClick={() => removeImage(tier)}
                       >
-                        <X className="w-4 h-4 mr-2" />
+                        <X className="w-4 h-4 mr-1.5" />
                         Remove
                       </Button>
                     </div>
+                    <p className="text-xs text-muted-foreground">Shown on the quote results screen</p>
                   </div>
                 ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
+                  <div
+                    className="flex flex-col items-center gap-3 p-8 rounded-lg border-2 border-dashed border-border cursor-pointer hover:border-primary/50 hover:bg-muted/20 transition-colors"
                     onClick={() => fileInputRefs.current[tier]?.click()}
-                    disabled={uploadingTier === tier}
                   >
-                    {uploadingTier === tier ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
-                    Upload Image
-                  </Button>
+                    {uploadingTier === tier ? (
+                      <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+                    ) : (
+                      <Upload className="w-8 h-8 text-muted-foreground" />
+                    )}
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-foreground">Upload an image</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Shown on the quote results screen for this tier</p>
+                    </div>
+                  </div>
                 )}
                 <input
                   ref={el => { fileInputRefs.current[tier] = el }}
@@ -352,19 +358,18 @@ export function SystemConfigPanel({
                     e.target.value = ''
                   }}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Upload an image representing this tier&apos;s system. Shown on the quote results screen.
-                </p>
               </div>
 
-              <Button
-                onClick={() => saveTierConfig(tier)}
-                disabled={savingTier === tier}
-                size="sm"
-              >
-                {savingTier === tier && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Save
-              </Button>
+              <div className="pt-2 border-t border-border">
+                <Button
+                  onClick={() => saveTierConfig(tier)}
+                  disabled={savingTier === tier}
+                  size="sm"
+                >
+                  {savingTier === tier && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Save
+                </Button>
+              </div>
             </TabsContent>
           ))}
         </Tabs>
