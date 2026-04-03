@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Business } from '@/lib/types/database'
-import { Calculator, Users, Settings, Code } from 'lucide-react'
+import { Calculator, Users, Settings, Code, Building2 } from 'lucide-react'
 import Image from 'next/image'
 
 interface PortalSidebarProps {
@@ -45,11 +45,8 @@ export function PortalSidebar({ business }: PortalSidebarProps) {
     <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
       {/* Logo */}
       <div className="p-4 border-b border-sidebar-border">
-        <Link href="/portal" className="flex flex-col gap-1">
+        <Link href="/portal">
           <Image src="/leadder_logo.svg" alt="Leadder" width={112} height={32} className="h-8 w-auto" />
-          <span className="text-xs text-muted-foreground truncate max-w-[160px]">
-            {business.name}
-          </span>
         </Link>
       </div>
 
@@ -79,7 +76,11 @@ export function PortalSidebar({ business }: PortalSidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-4 border-t border-sidebar-border space-y-2">
+        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-sidebar-accent/50">
+          <Building2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <span className="text-xs text-sidebar-foreground font-medium truncate">{business.name}</span>
+        </div>
         <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-sidebar-accent/30">
           <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
           <span className="text-xs text-muted-foreground">Widget Active</span>
