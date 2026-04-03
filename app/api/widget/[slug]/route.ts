@@ -17,7 +17,7 @@ export async function GET(
     // Fetch business by slug
     const { data: business, error: businessError } = await supabaseAdmin
       .from('businesses')
-      .select('id, name, slug, primary_color, logo_url')
+      .select('id, name, slug, primary_color')
       .eq('slug', slug)
       .single()
 
@@ -105,7 +105,6 @@ export async function GET(
         name: business.name,
         slug: business.slug,
         primaryColor: business.primary_color,
-        logoUrl: business.logo_url,
       },
       products: visibleProducts,
       pricingTiers: pricingTiers || [],

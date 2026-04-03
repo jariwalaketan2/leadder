@@ -43,18 +43,18 @@ export function WidgetEmbedCode({ widgetUrl, iframeCode, businessSlug }: WidgetE
     setTimeout(() => setCopiedLink(false), 2000)
   }
 
-  const buttonCode = `<button onclick="document.getElementById('hvacq-modal').style.display='flex'" style="background:#4f46e5;color:#fff;padding:14px 28px;border:none;border-radius:50px;font-size:15px;font-weight:600;cursor:pointer;">
+  const buttonCode = `<button onclick="document.getElementById('leadder-modal').style.display='flex'" style="background:#4f46e5;color:#fff;padding:14px 28px;border:none;border-radius:50px;font-size:15px;font-weight:600;cursor:pointer;">
   Get Your Instant Quote →
 </button>`
 
   const modalCode = `<!-- Place this before </body> — only once per page -->
-<div id="hvacq-modal"
-  onclick="if(event.target.id==='hvacq-modal')this.style.display='none'"
+<div id="leadder-modal"
+  onclick="if(event.target.id==='leadder-modal')this.style.display='none'"
   style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999999;align-items:center;justify-content:center;padding:16px;">
   <div style="background:#fff;border-radius:16px;width:100%;max-width:680px;max-height:90vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #e5e7eb;">
       <strong style="font-size:15px;color:#111827;">Get Your Instant Quote</strong>
-      <button onclick="document.getElementById('hvacq-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:24px;color:#9ca3af;line-height:1;padding:0;">×</button>
+      <button onclick="document.getElementById('leadder-modal').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:24px;color:#9ca3af;line-height:1;padding:0;">×</button>
     </div>
     <iframe src="${widgetUrl}" width="100%" height="580" frameborder="0" style="display:block;" loading="lazy"></iframe>
   </div>

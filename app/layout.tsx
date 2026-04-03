@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'HVAC Quote System',
+  title: 'Leadder',
   description: 'Instant HVAC quotes for your business',
 }
 

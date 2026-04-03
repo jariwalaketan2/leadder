@@ -53,7 +53,7 @@ export default async function PortalPage() {
           Welcome back, {business.name}
         </h2>
         <p className="text-muted-foreground mt-1">
-          Here&apos;s an overview of your HVAC quote system
+          Here&apos;s an overview of your Leadder dashboard
         </p>
       </div>
 

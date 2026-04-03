@@ -4,13 +4,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Business } from '@/lib/types/database'
-import { 
-  Zap, 
-  Calculator, 
-  Users, 
-  Settings,
-  Code,
-} from 'lucide-react'
+import { Calculator, Users, Settings, Code } from 'lucide-react'
+import Image from 'next/image'
 
 interface PortalSidebarProps {
   business: Business
@@ -50,18 +45,11 @@ export function PortalSidebar({ business }: PortalSidebarProps) {
     <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
       {/* Logo */}
       <div className="p-4 border-b border-sidebar-border">
-        <Link href="/portal" className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-sidebar-primary">
-            <Zap className="w-5 h-5 text-sidebar-primary-foreground" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-sidebar-foreground leading-tight">
-              HVAC Quotes
-            </span>
-            <span className="text-xs text-muted-foreground truncate max-w-[160px]">
-              {business.name}
-            </span>
-          </div>
+        <Link href="/portal" className="flex flex-col gap-1">
+          <Image src="/leadder_logo.svg" alt="Leadder" width={112} height={32} className="h-8 w-auto" />
+          <span className="text-xs text-muted-foreground truncate max-w-[160px]">
+            {business.name}
+          </span>
         </Link>
       </div>
 

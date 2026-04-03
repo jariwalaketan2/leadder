@@ -18,7 +18,6 @@ CREATE TABLE public.businesses (
   city          TEXT,
   state         TEXT,
   zip           TEXT,
-  logo_url      TEXT,
   primary_color TEXT DEFAULT '#10B981',
   created_at    TIMESTAMPTZ DEFAULT NOW(),
   updated_at    TIMESTAMPTZ DEFAULT NOW()

@@ -10,7 +10,6 @@ export interface Business {
   city: string | null
   state: string | null
   zip: string | null
-  logo_url: string | null
   primary_color: string
   created_at: string
   updated_at: string

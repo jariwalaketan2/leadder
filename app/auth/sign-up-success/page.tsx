@@ -1,17 +1,15 @@
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Zap, Mail, ArrowRight } from 'lucide-react'
+import { Mail, ArrowRight } from 'lucide-react'
+import Image from 'next/image'
 
 export default function SignUpSuccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
-            <Zap className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <span className="text-2xl font-bold text-foreground">HVAC Quotes</span>
+        <div className="flex items-center justify-center mb-8">
+          <Image src="/leadder_logo.svg" alt="Leadder" width={180} height={52} className="h-12 w-auto" />
         </div>
 
         <Card className="border-border bg-card">

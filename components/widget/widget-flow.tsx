@@ -28,7 +28,6 @@ interface WidgetData {
     name: string
     slug: string
     primaryColor: string
-    logoUrl: string | null
   }
   products: Array<{
     id: string

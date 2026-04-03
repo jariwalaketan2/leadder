@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Zap, Loader2, ArrowLeft, Mail } from 'lucide-react'
+import { Loader2, ArrowLeft, Mail } from 'lucide-react'
+import Image from 'next/image'
 
 const supabase = createClient()
 
@@ -44,11 +45,8 @@ export default function ForgotPasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="w-full max-w-md">
-          <div className="flex items-center justify-center gap-2 mb-8">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
-              <Zap className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="text-2xl font-bold text-foreground">HVAC Quotes</span>
+          <div className="flex items-center justify-center mb-8">
+            <Image src="/leadder_logo.svg" alt="Leadder" width={180} height={52} className="h-12 w-auto" />
           </div>
 
           <Card className="border-border bg-card">
@@ -80,11 +78,8 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
-            <Zap className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <span className="text-2xl font-bold text-foreground">HVAC Quotes</span>
+        <div className="flex items-center justify-center mb-8">
+          <Image src="/leadder_logo.svg" alt="Leadder" width={180} height={52} className="h-12 w-auto" />
         </div>
 
         <Card className="border-border bg-card">
