@@ -257,9 +257,9 @@ export function SystemConfigPanel({
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="good">
-          <TabsList className="mb-4">
+          <TabsList className="mb-6 w-full grid grid-cols-3 h-auto p-1">
             {TIER_ORDER.map(tier => (
-              <TabsTrigger key={tier} value={tier} className={tierColors[tier]}>
+              <TabsTrigger key={tier} value={tier} className={`py-3 text-sm font-semibold ${tierColors[tier]}`}>
                 {tier.charAt(0).toUpperCase() + tier.slice(1)}
               </TabsTrigger>
             ))}
